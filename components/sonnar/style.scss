@@ -1,0 +1,28 @@
+.sonnar-toast {
+
+    [data-type="error"] {
+        svg {
+            fill: var(--error);
+        }
+    }
+
+    [data-type="success"] {
+        svg {
+            fill: var(--success);
+        }
+    }
+
+    [data-type="warning"] {
+        svg {
+            fill: var(--warning);
+        }
+    }
+
+    [data-type="info"] {
+        svg {
+            fill: var(--info);
+        }
+    }
+
+     
+}

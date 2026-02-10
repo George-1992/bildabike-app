@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum account_status {
+  active
+  inactive
+  archived
+  suspended
+}
+
+enum users_status {
+  active
+  inactive
+  pending
+  banned
+}
+
+enum account_role {
+  owner
+  admin
+  member
+  viewer
+}
+
+enum workspace_role {
+  owner
+  admin
+  member
+  viewer
+}
+
+model accounts {
+  id         String         @id @default(uuid())
+  name       String         @default("Default Account")
+  status     account_status @default(inactive)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  users_and_accounts users_and_accounts[]
+  workspaces         workspaces[]
+
+  @@index([name])
+  @@index([status])
+}
+
+model users {
+  id         String       @id @default(cuid())
+  status     users_status @default(pending)
+  email      String       @unique
+  first_name String?      @default("")
+  last_name  String?      @default("")
+  password   String?
+  provider   String?      @default("email")
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  users_and_accounts users_and_accounts[]
+
+  @@index([email])
+  @@index([status])
+  @@index([provider])
+  @@index([first_name])
+  @@index([last_name])
+}
+
+model users_and_accounts {
+  id         String       @id @default(cuid())
+  role       account_role @default(admin)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  account_id String
+  account    accounts @relation(fields: [account_id], references: [id])
+  user_id    String
+  user       users    @relation(fields: [user_id], references: [id])
+
+  @@unique([account_id, user_id])
+  @@index([account_id])
+  @@index([user_id])
+  @@index([role])
+}
+
+model workspaces {
+  id         String    @id @default(cuid())
+  name       String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  account    accounts? @relation(fields: [account_id], references: [id])
+  account_id String?
+
+  notes notes[]
+
+  @@index([name])
+}
+
+model notes {
+  id         String   @id @default(cuid())
+  title      String
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workspace    workspaces? @relation(fields: [workspace_id], references: [id])
+  workspace_id String?
+
+  @@index([title])
+}
