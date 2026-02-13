@@ -66,7 +66,7 @@ export const validatePassword = (password, options = {}) => {
 
 // Name validation
 export const validateName = (name, fieldName = 'Name', options = {}) => {
-    const { minLength = 1, maxLength = 50, allowNumbers = false } = options;
+    const { minLength = 1, maxLength = 50, allowNumbers = true } = options;
     const errors = [];
 
     if (!name || name.trim() === '') {
@@ -84,19 +84,33 @@ export const validateName = (name, fieldName = 'Name', options = {}) => {
         errors.push(`${fieldName} must be less than ${maxLength} characters`);
     }
 
-    // Check for valid characters (letters, spaces, hyphens, apostrophes)
-    const nameRegex = allowNumbers
-        ? /^[a-zA-Z0-9\s\-'\.]+$/
-        : /^[a-zA-Z\s\-'\.]+$/;
+    // Check for valid characters (letters, spaces, hyphens, apostrophes, underscores)
+    const regexes = [
+        {
+            error: `${fieldName} can only contain letters, numbers, spaces, hyphens, underscores, and apostrophes`,
+            regex: /^[a-zA-Z0-9\s'_-]+$/
+        }
 
-    if (!nameRegex.test(trimmedName)) {
-        errors.push(`${fieldName} contains invalid characters`);
+    ]
+    if (!allowNumbers) {
+        regexes.push({
+            error: `${fieldName} can only contain letters, spaces, hyphens, underscores, and apostrophes`,
+            regex: /^[a-zA-Z\s'_-]+$/
+        });
+    }
+
+    for (const { error, regex } of regexes) {
+        if (!regex.test(trimmedName)) {
+            errors.push(error);
+            break;
+        }
     }
 
     // Check for consecutive spaces or special characters
     if (/\s{2,}/.test(trimmedName)) {
         errors.push(`${fieldName} cannot contain consecutive spaces`);
     }
+
 
     return { isValid: errors.length === 0, errors, value: trimmedName };
 };

@@ -181,3 +181,31 @@ export const toNumLocalString = (num) => {
         return num;
     }
 }
+
+export const toDisplayNum = (num) => {
+    try {
+        if (num === null || num === undefined || isNaN(num)) return num;
+        if (num >= 1e9) {
+            // toFixed(1) will keep one decimal place, and replace(/\.0$/, '') will remove the decimal if it's .0
+            return (num / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+        }
+        if (num >= 1e6) {
+            // toFixed(1) will keep one decimal place, and replace(/\.0$/, '') will remove the decimal if it's .0
+            return (num / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+        }
+
+        // add commas for thousands
+        if (num >= 1e3) {
+            return num.toLocaleString();
+        }
+
+        // if (num >= 1e3) {
+        //     // toFixed(1) will keep one decimal place, and replace(/\.0$/, '') will remove the decimal if it's .0
+        //     return (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+        // }
+        return num.toString();
+    } catch (error) {
+        console.log('toDisplayNum error ==> ', error);
+        return num;
+    }
+}

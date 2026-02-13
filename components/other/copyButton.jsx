@@ -4,7 +4,7 @@ import { Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { notify } from '@/components/sonnar/sonnar';
 
-export default function CopyButton({ text = '', duration = 2000 }) {
+export default function CopyButton({ value = '', duration = 2000 }) {
     const [_isCopied, _setIsCopied] = useState(false);
 
     useEffect(() => {
@@ -18,7 +18,7 @@ export default function CopyButton({ text = '', duration = 2000 }) {
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(text);
+            await navigator.clipboard.writeText(value);
             _setIsCopied(true);
             // notify({ type: 'success', message: 'Copied to clipboard' });
         } catch (error) {
@@ -28,10 +28,11 @@ export default function CopyButton({ text = '', duration = 2000 }) {
 
     return (
         <button
+            type='button'
             onClick={handleCopy}
-            disabled={!text}
+            disabled={!value}
             className="p-2 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title={text ? 'Copy to clipboard' : 'No text to copy'}
+            title={value ? 'Copy to clipboard' : 'No text to copy'}
         >
             {_isCopied ? (
                 <Check className="w-4 h-4 text-gray-500" />

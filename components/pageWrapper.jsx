@@ -11,6 +11,7 @@ import { saGetItem } from "@/actions";
 import AccountMessages from "@/components/other/accountMessages";
 import { SignoutEl } from "@/components/auth";
 import ExtenSession from "@/components/auth/extenSession";
+import TestButton from "@/components/testButton";
 
 const NEXT_PUBLIC_PROJECT_NAME = process.env.NEXT_PUBLIC_PROJECT_NAME || 'SuperApp';
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'aaaa';
@@ -48,7 +49,7 @@ export default async function PageWrapper({ children, params, searchParams }) {
 
     // get session here if needed
     const session = await getSession();
-    console.log('session: ', session);
+    // console.log('session: ', session);
 
     let user = null;
     let account = null;
@@ -196,6 +197,7 @@ export default async function PageWrapper({ children, params, searchParams }) {
                         </div>
                     </div>
                 </div>
+                <TestButton workspace={workspace} />
                 <ToasterSonnar />
                 <ExtenSession session={session} pathname={pathname} workspace={workspace} />
             </body>

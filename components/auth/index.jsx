@@ -3,7 +3,6 @@
 import { serverSubmit } from "@/actions/auth";
 import SigninEl from "@/components/auth/signinEl";
 import SignoutEl from "@/components/auth/signoutEl";
-import { GridPattern } from "@/components/other/grid";
 import Tabs, { TabTrigger } from "@/components/other/tabs";
 import { notify } from "@/components/sonnar/sonnar";
 import TurnstileEl from "@/components/turnstile";
@@ -261,16 +260,7 @@ export default function AuthEl({ type = 'signin', pathname, searchParams }) {
     return (
         <div className="w-full h-full flex justify-center"  >
 
-            {/* gird */}
-            <GridPattern
-                width={40}
-                height={40}
-                x={-1}
-                y={-1}
-                strokeDasharray={"0"}
-                squares={[[0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [10, 10], [12, 12], [14, 14], [16, 16], [18, 18]]}
-                className={'z-0 opacity-30'}
-            />
+
 
             <div className="w-[90%] md:w-[450px] min-h-60 mt-10 ">
                 {/* branding */}

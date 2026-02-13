@@ -254,7 +254,7 @@ export const Select = ({
                     {selectedOptions.map((option, index) => (
                         <span
                             key={option.value}
-                            className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm"
+                            className="inline-flex items-center gap-1 px-1 py-0.5 bg-gray-100 text-gray-700 rounded text-sm"
                         >
                             {renderValue ? renderValue(option) : option.label}
                             {!disabled && (

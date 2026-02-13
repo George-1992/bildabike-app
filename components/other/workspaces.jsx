@@ -10,7 +10,8 @@ export default function Workspaces({ session, user, account, isCollapsed = false
     // console.log('workspace ==> ', workspace);
     // console.log('workspaces ==> ', workspaces);
 
-    const [_workspace, _setWorkspace] = useState(workspace || workspaces[0] || null);
+    const w = workspace || workspaces?.[0] || null;
+    const [_workspace, _setWorkspace] = useState(w);
 
     const getAllWorkspaces = () => {
         // exclude selected workspace from the list

@@ -97,10 +97,13 @@ model workspaces {
   name       String
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
-  account    accounts? @relation(fields: [account_id], references: [id])
+  account    accounts? @relation(fields: [account_id], references: [id], onDelete: Cascade)
   account_id String?
 
-  notes notes[]
+  notes  notes[]
+  bikes  bikes[]
+  skuses skus[]
+  scraps scraps[]
 
   @@index([name])
 }
@@ -112,8 +115,80 @@ model notes {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  workspace    workspaces? @relation(fields: [workspace_id], references: [id])
+  workspace    workspaces? @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
   workspace_id String?
 
   @@index([title])
+}
+
+model bikes {
+  id            String   @id @default(cuid())
+  name          String?  @default("")
+  source        String?  @default("")
+  description   String?  @default("")
+  in_stock      Boolean? @default(false)
+  product_image String?  @default("")
+  record_url    String?  @default("")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workspace    workspaces? @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  workspace_id String?
+
+  skus skus[]
+
+  @@index([name])
+}
+
+model skus {
+  id                    String  @id @default(cuid())
+  name                  String  @default("")
+  source                String  @default("")
+  brand                 String  @default("")
+  product_type          String  @default("")
+  quantity              Int     @default(0)
+  size                  String  @default("")
+  wheel_size_front      String  @default("")
+  wheel_size_rear       String  @default("")
+  normal_price          Float   @default(0)
+  consumer_price        Float   @default(0)
+  dealer_price          Float   @default(0)
+  profit_margin         Float   @default(0)
+  profit_margin_percent Float   @default(0)
+  in_stock              Boolean @default(false)
+  item_group_name       String  @default("")
+  item_number           String  @default("")
+  level                 String  @default("")
+  model                 String  @default("")
+  model_series_name     String  @default("")
+  model_year            String  @default("")
+  record_url            String? @default("")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  bike    bikes?  @relation(fields: [bike_id], references: [id], onDelete: Cascade)
+  bike_id String?
+
+  workspace    workspaces? @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  workspace_id String?
+
+  @@index([name])
+  @@index([brand])
+  @@index([item_number])
+}
+
+model scraps {
+  id         String   @id @default(cuid())
+  name       String   @default("")
+  status     String   @default("pending")
+  result     Json?    @default("{}")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  workspace    workspaces? @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  workspace_id String?
+
+  @@index([name])
 }

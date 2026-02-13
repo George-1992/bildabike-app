@@ -44,7 +44,7 @@ import { cn } from "@/libs/utils";
  * 
  * @typedef {Object} FieldConfig
  * @property {string} name - Unique field identifier
- * @property {string|React.ReactNode} label - Display label for field (string or React component)
+ * @property {string|Function|React.ReactNode} label - Display label for field (string, function, or React component). If function, receives (value, formData) as arguments
  * @property {string} [type='text'] - Input type (text, email, number, select, textarea, date, datetime, toggle, notesArray, element)
  * @property {string} [placeholder=''] - Input placeholder text
  * @property {boolean} [required=false] - Makes field required for validation
@@ -186,7 +186,8 @@ export default function FormBuilder({
                     if (isEmpty) {
                         // console.log('isEmpty: ', isEmpty);
 
-                        newErrors[key] = `${field.label || key} is required`;
+                        const labelText = typeof field.label === 'function' ? key : (field.label || key);
+                        newErrors[key] = `${labelText} is required`;
                         hasErrors = true;
                         continue;
                     }
@@ -329,7 +330,9 @@ export default function FormBuilder({
                                                         _formErrors[field.name] ? 'text-red-500' : '',
                                                     )}
                                                 >
-                                                    {field.label}
+                                                    {typeof field.label === 'function' 
+                                                        ? field.label(handleGetValue(field), _formData) 
+                                                        : field.label}
                                                 </label>
 
                                                 <div className="flex-1 h-full flex flex-col items-start justify-center">
