@@ -11,6 +11,9 @@ const GG_PASSWORD = process.env.GG_PASSWORD || '';
 const CCG_USERNAME = process.env.CCG_USERNAME || '';
 const CCG_PASSWORD = process.env.CCG_PASSWORD || '';
 
+const QBP_USERNAME = process.env.QBP_USERNAME || '';
+const QBP_PASSWORD = process.env.QBP_PASSWORD || '';
+
 export default async function startScrape({
     data = null,
     workspaceId = null,
@@ -48,7 +51,7 @@ export default async function startScrape({
         //     return resObj;
         // }
 
-        const result = await scrap();
+        const result = await scrap({ workspaceId });
         console.log('startScrape >>> startScrape END : ', result.success, result.message);
 
         const scrapId = data && data?.id ? data.id : null;
@@ -62,7 +65,7 @@ export default async function startScrape({
             });
         }
 
-        saveDataToDB({ data: result.data, workspaceId });
+        // saveDataToDB({ data: result.data, workspaceId });
         resObj = result;
 
 
@@ -75,6 +78,7 @@ export default async function startScrape({
         return resObj;
     }
 }
+
 
 const getProfitMargin = (item) => {
     try {
@@ -293,6 +297,7 @@ const formatData = ({ data, source }) => {
         return [];
     }
 };
+// giantGroup
 const giantGroup = async () => {
     let resObj = {
         success: false,
@@ -480,7 +485,6 @@ const giantGroup = async () => {
         };
     }
 };
-
 //cyclingsportsgroup
 const cyclingSportsGroup = async () => {
     let resObj = {
@@ -628,13 +632,140 @@ const cyclingSportsGroup = async () => {
         resObj.message = error.message;
         return resObj;
     }
-}
+};
+
+// qbp
+const qbp = async () => {
+    let resObj = {
+        success: false,
+        message: '',
+        data: {},
+        clcError: null,
+    };
+
+    const screenshots = [];
+    const htmls = [];
+    const apiDataStore = [];
+
+    try {
+        const loginUrl = 'https://login.qbp.com/login';
+
+        // Set user agent to avoid bot detection
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+        // Set the viewport to a desktop size
+        await page.setViewport({ width: 1920, height: 1080 });
+
+        console.log('Navigating to login page...');
+        await page.goto(loginUrl, {
+            waitUntil: 'domcontentloaded',
+            timeout: 60000
+        });
+
+        // Take initial screenshot
+        // screenshots.push(await page.screenshot({ fullPage: true }));
+
+        console.log('Waiting for login form...');
+        // Wait for the form to be ready
+        await page.waitForSelector("input[id='username']", { visible: true, timeout: 10000 });
+        await page.waitForSelector("input[id='password']", { visible: true, timeout: 10000 });
+        await page.waitForSelector("button[type='submit']", { visible: true, timeout: 10000 });
+
+        console.log('Filling credentials...');
+        // Clear and fill username
+        await page.click("input[id='username']", { clickCount: 3 });
+        await page.type("input[id='username']", userName, { delay: 100 });
+
+        // Clear and fill password
+        await page.click("input[id='password']", { clickCount: 3 });
+        await page.type("input[id='password']", password, { delay: 100 });
+
+        // Small delay before screenshot
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Take screenshot before clicking
+        // screenshots.push(await page.screenshot({ fullPage: true }));
 
 
+        // Try clicking with multiple strategies
+        try {
+            await Promise.all([
+                page.waitForNavigation({
+                    waitUntil: 'domcontentloaded',
+                    timeout: 60000
+                }),
+                page.click("button[type='submit']")
+            ]);
+            resObj.clcError = null;
+        } catch (navError) {
+            resObj.clcError = `Navigation failed: ${navError.message}`;
+            console.log('Navigation with click failed, trying evaluate click...');
+
+            // Fallback: try clicking via evaluate
+            await page.evaluate(() => {
+                const btn = document.querySelector("button[type='submit']");
+                if (btn) btn.click();
+            });
+
+            // Wait manually
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        console.log('Waiting for page to settle...');
+        // Wait for any redirects or page loads
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Check current URL
+        const currentUrl = page.url();
+
+        // Take screenshot after login
+        // screenshots.push(await page.screenshot({ fullPage: true }));
+
+        await page.goto('https://www.qbp.com/qbponlinestorefront/', { waitUntil: 'networkidle2', timeout: 240000 });
+
+        screenshots.push(await page.screenshot({ fullPage: true }));
+
+        resObj.success = true;
+        resObj.message = 'Login process completed';
+        resObj.screenshots = screenshots;
+        resObj.htmls = htmls;
+        resObj.data = {
+            ...apiDataStore,
+            finalUrl: currentUrl
+        };
+
+        return resObj;
+
+    } catch (error) {
+        console.error('Error in qbp function:', error);
+        console.error('Error stack:', error.stack);
+
+        // Take error screenshot for debugging
+        try {
+            const errorUrl = page.url();
+            console.log('Error occurred at URL:', errorUrl);
+
+            screenshots.push(await page.screenshot({ fullPage: true }));
+            htmls.push(await page.content());
+
+            resObj.data = { errorUrl };
+        } catch (e) {
+            console.error('Failed to capture error details:', e);
+        }
+
+        resObj.success = false;
+        resObj.message = error.message;
+        resObj.clcError = resObj.clcError || error.message;
+        resObj.screenshots = screenshots;
+        resObj.htmls = htmls;
+
+        return resObj;
+    }
+};
 
 // ======================================================
 // execute the function and return the result
-const scrap = async () => {
+const scrap = async ({ workspaceId } = {}) => {
     let resObj = {
         success: false,
         message: '',
@@ -650,30 +781,39 @@ const scrap = async () => {
         }
 
         const tasks = [
+            // {
+            //     name: 'giantGroup',
+            //     stealth: true,
+            //     timeout: 240000,
+            //     data: `export default async function ({ page }) { const userName = "${GG_USERNAME}"; const password = "${GG_PASSWORD}";\n${getFuncBody(giantGroup)}\n}`.trim(),
+            //     isLocalSave: false,
+            //     result: null,
+            // },
+            // {
+            //     name: 'cyclingsportsgroup',
+            //     stealth: true,
+            //     timeout: 240000,
+            //     data: `export default async function ({ page }) { const userName = "${CCG_USERNAME}"; const password = "${CCG_PASSWORD}";\n${getFuncBody(cyclingSportsGroup)}\n}`.trim(),
+            //     isLocalSave: false,
+            //     result: null,
+            //     isDbSave: true,
+            //     workspaceId,
+            // },
             {
-                name: 'giantGroup',
+                name: 'qbp',
                 stealth: true,
                 timeout: 240000,
-                data: `export default async function ({ page }) { const userName = "${GG_USERNAME}"; const password = "${GG_PASSWORD}";\n${getFuncBody(giantGroup)}\n}`.trim(),
+                data: `export default async function ({ page }) { const userName = "${QBP_USERNAME}"; const password = "${QBP_PASSWORD}";\n${getFuncBody(qbp)}\n}`.trim(),
                 isLocalSave: false,
                 result: null,
-            },
-            {
-                name: 'cyclingsportsgroup',
-                stealth: true,
-                timeout: 240000,
-                data: `export default async function ({ page }) { const userName = "${CCG_USERNAME}"; const password = "${CCG_PASSWORD}";\n${getFuncBody(cyclingSportsGroup)}\n}`.trim(),
-                isLocalSave: false,
-                result: null,
+                isDbSave: false,
+                workspaceId,
             }
         ]
-
-
 
         // console.log('tasks >>> ', tasks.map(t => ({ name: t.name, dataLength: t.data.length, stealth: t.stealth, timeout: t.timeout })));
 
         const processTask = async ({ task }) => {
-
             let url = `${BROWSERLESS_URL}/function?token=${BROWSERLESS_TOKEN}`;
             if (task.timeout) {
                 url += `&timeout=${task.timeout}`;
@@ -714,6 +854,7 @@ const scrap = async () => {
 
             const result = {
                 ...resultPre,
+                clcError: resultPre?.clcError || null,
                 data: formatData({
                     data: resultPre.data,
                     source: task.name
@@ -777,7 +918,14 @@ const scrap = async () => {
             //     fs.writeFileSync(localFilePath, JSON.stringify(thisResult, null, 2));
             //     console.log('Saved local result:', localFilePath);
             // }
+            if (task.isDbSave) {
+                await saveDataToDB({
+                    data: [{ name: task.name, result: thisResult }],
+                    workspaceId: task.workspaceId,
+                });
+            }
         }
+
         resObj.success = true;
         resObj.message = 'Scrape completed successfully';
         resObj.data = tasks.map(t => ({ name: t.name, result: t.result }));
@@ -791,6 +939,8 @@ const scrap = async () => {
         return resObj;
     }
 };
+
+
 // db saver
 const saveDataToDB = async ({ data, workspaceId }) => {
     try {
