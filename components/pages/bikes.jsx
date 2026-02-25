@@ -29,10 +29,12 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
     const [_editItem, _setEditItem] = useState(null);
 
     const availableSources = ['giantGroup', 'cyclingsportsgroup'];
+    const [_availableBrands, _setAvailableBrands] = useState([]);
     const [_filters, _setFilters] = useState({
         in_stock: true,
         profit_margin_percent: 40,
         sources: ['giantGroup', 'cyclingsportsgroup'],
+        brands: null,
     });
 
     const sourceImages = {
@@ -182,6 +184,16 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
         try {
             _setIsLoading(true);
             const inStock = typeof filters.in_stock === 'boolean' ? filters.in_stock : true;
+            const skuWhere = {
+                in_stock: inStock,
+                ...(filters.brands && filters.brands.length > 0
+                    ? {
+                        brand: {
+                            in: filters.brands
+                        }
+                    }
+                    : {})
+            };
             const reqParams = {
                 collection: collectionName,
                 includeCount: true,
@@ -190,15 +202,14 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
                         workspace_id: workspace ? workspace.id : null,
                         in_stock: inStock,
                         source: filters.sources && filters.sources.length > 0 ? { in: filters.sources } : undefined,
+                        skus: filters.brands && filters.brands.length > 0 ? { some: skuWhere } : undefined,
                     },
                     orderBy: {
                         created_at: 'desc'
                     },
                     include: {
                         skus: {
-                            where: {
-                                in_stock: inStock,
-                            }
+                            where: skuWhere
                         },
                     },
                     skip: thisPage.skip,
@@ -244,6 +255,37 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
             _setIsLoading(false);
         }
     };
+
+    const fetchAvailableBrands = async (filters = _filters) => {
+        try {
+            const response = await saGetItems({
+                collection: 'skus',
+                query: {
+                    where: {
+                        workspace_id: wId,
+                        in_stock: typeof filters.in_stock === 'boolean' ? filters.in_stock : true,
+                        source: filters.sources && filters.sources.length > 0 ? { in: filters.sources } : undefined,
+                    },
+                    select: {
+                        brand: true,
+                    },
+                    distinct: ['brand'],
+                    orderBy: {
+                        brand: 'asc',
+                    },
+                },
+            });
+
+            if (response?.success) {
+                const brands = (response.data || [])
+                    .map(item => item?.brand)
+                    .filter(Boolean);
+                _setAvailableBrands(brands);
+            }
+        } catch (error) {
+            console.error('Error fetching brands: ', error);
+        }
+    }
     const handlePageChange = (newPage) => {
         _setPage(newPage);
         fetchData(newPage);
@@ -337,13 +379,24 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
 
     useEffect(() => {
         fetchData({});
+        fetchAvailableBrands(_filters);
     }, []);
 
     const handleFilterChange = (filterName, value) => {
+        const nextFilters = {
+            ..._filters,
+            [filterName]: value
+        };
+
         _setFilters(prev => ({
             ...prev,
             [filterName]: value
         }));
+
+        if (filterName === 'in_stock' || filterName === 'sources') {
+            fetchAvailableBrands(nextFilters);
+        }
+
         // fetchData with new filters, reset to first page
         const newPage = {
             ..._page,
@@ -353,10 +406,7 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
         fetchData({
             thisPage: newPage,
             append: false,
-            filters: {
-                ..._filters,
-                [filterName]: value
-            }
+            filters: nextFilters
         });
     }
 
@@ -433,6 +483,22 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
                             searchable={true}
                             clearable={true}
                             placeholder="Select sources..."
+                        />
+                    </div>
+                    <div className="w-80 flex flex-col">
+                        <span className="h-7">Brands</span>
+                        <Select
+                            name="brands"
+                            value={_filters.brands}
+                            onChange={(e) => {
+                                const newBrands = e?.target?.value || [];
+                                handleFilterChange('brands', newBrands.length > 0 ? newBrands : null);
+                            }}
+                            options={_availableBrands.map(brand => ({ label: toDisplayStr(brand), value: brand }))}
+                            multiple={true}
+                            searchable={true}
+                            clearable={true}
+                            placeholder="Select brands..."
                         />
                     </div>
                 </div>
