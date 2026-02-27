@@ -432,8 +432,8 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
 
     return (
         <div className="container-main flex flex-col gap-4">
-            <div className="flex gap-3 items-center justify-between">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex flex-wrap items-center gap-3">
                     <h1 className="text-2xl">Bikes</h1>
                     <span className="text-sm text-gray-600">
                         Showing {_data.length} of {_page.total} bikes
