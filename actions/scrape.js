@@ -65,7 +65,7 @@ export default async function startScrape({
             });
         }
 
-        // saveDataToDB({ data: result.data, workspaceId });
+        saveDataToDB({ data: result.data, workspaceId });
         resObj = result;
 
 

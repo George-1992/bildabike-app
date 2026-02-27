@@ -164,6 +164,11 @@ export default function Scraps({ pathname, user, account, session, workspace }) 
                     orderBy: {
                         created_at: "desc"
                     },
+                    select:{
+                        id: true,
+                        name: true,
+                        status: true,
+                    },
                     skip: thisPage.skip,
                     take: thisPage.take,
                 }
