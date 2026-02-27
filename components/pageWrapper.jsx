@@ -15,6 +15,7 @@ import TestButton from "@/components/testButton";
 
 const NEXT_PUBLIC_PROJECT_NAME = process.env.NEXT_PUBLIC_PROJECT_NAME || 'SuperApp';
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'aaaa';
+const IS_DEV = process.env.NODE_ENV === 'development';
 
 const geistSans = localFont({
     src: "../app/fonts/GeistMonoVF.woff",
@@ -197,7 +198,7 @@ export default async function PageWrapper({ children, params, searchParams }) {
                         </div>
                     </div>
                 </div>
-                <TestButton workspace={workspace} />
+                {IS_DEV &&<TestButton workspace={workspace} />}
                 <ToasterSonnar />
                 <ExtenSession session={session} pathname={pathname} workspace={workspace} />
             </body>

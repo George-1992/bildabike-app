@@ -781,34 +781,34 @@ const scrap = async ({ workspaceId } = {}) => {
         }
 
         const tasks = [
-            // {
-            //     name: 'giantGroup',
-            //     stealth: true,
-            //     timeout: 240000,
-            //     data: `export default async function ({ page }) { const userName = "${GG_USERNAME}"; const password = "${GG_PASSWORD}";\n${getFuncBody(giantGroup)}\n}`.trim(),
-            //     isLocalSave: false,
-            //     result: null,
-            // },
-            // {
-            //     name: 'cyclingsportsgroup',
-            //     stealth: true,
-            //     timeout: 240000,
-            //     data: `export default async function ({ page }) { const userName = "${CCG_USERNAME}"; const password = "${CCG_PASSWORD}";\n${getFuncBody(cyclingSportsGroup)}\n}`.trim(),
-            //     isLocalSave: false,
-            //     result: null,
-            //     isDbSave: true,
-            //     workspaceId,
-            // },
             {
-                name: 'qbp',
+                name: 'giantGroup',
                 stealth: true,
                 timeout: 240000,
-                data: `export default async function ({ page }) { const userName = "${QBP_USERNAME}"; const password = "${QBP_PASSWORD}";\n${getFuncBody(qbp)}\n}`.trim(),
+                data: `export default async function ({ page }) { const userName = "${GG_USERNAME}"; const password = "${GG_PASSWORD}";\n${getFuncBody(giantGroup)}\n}`.trim(),
                 isLocalSave: false,
                 result: null,
-                isDbSave: false,
+            },
+            {
+                name: 'cyclingsportsgroup',
+                stealth: true,
+                timeout: 240000,
+                data: `export default async function ({ page }) { const userName = "${CCG_USERNAME}"; const password = "${CCG_PASSWORD}";\n${getFuncBody(cyclingSportsGroup)}\n}`.trim(),
+                isLocalSave: false,
+                result: null,
+                isDbSave: true,
                 workspaceId,
-            }
+            },
+            // {
+            //     name: 'qbp',
+            //     stealth: true,
+            //     timeout: 240000,
+            //     data: `export default async function ({ page }) { const userName = "${QBP_USERNAME}"; const password = "${QBP_PASSWORD}";\n${getFuncBody(qbp)}\n}`.trim(),
+            //     isLocalSave: false,
+            //     result: null,
+            //     isDbSave: false,
+            //     workspaceId,
+            // }
         ]
 
         // console.log('tasks >>> ', tasks.map(t => ({ name: t.name, dataLength: t.data.length, stealth: t.stealth, timeout: t.timeout })));
