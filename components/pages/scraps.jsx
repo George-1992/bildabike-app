@@ -1,6 +1,9 @@
 'use client';
 
-import { saCreateItem, saGetItems, saUpdateItem, saDeleteItem, saDeleteItems } from "@/actions";
+import {
+    saCreateItem, saGetItems, saUpdateItem,
+    saDeleteItem, saDeleteItems
+} from "@/actions";
 import { notify } from "@/components/sonnar/sonnar";
 import { ExpandableModal, PopupModal } from "@/components/other/modals";
 import Table from "@/components/table";
@@ -56,7 +59,7 @@ export default function Scraps({ pathname, user, account, session, workspace }) 
 
             let toSaveData = cloneDeep(item);
             toSaveData.workspace_id = wId;
-            console.log("toSaveData: ", toSaveData);
+            // console.log("toSaveData: ", toSaveData);
 
             if (Object.prototype.hasOwnProperty.call(toSaveData, "result")) {
                 const normalized = normalizeResult(toSaveData.result);
@@ -84,6 +87,8 @@ export default function Scraps({ pathname, user, account, session, workspace }) 
                     collection: collectionName,
                     data: toSaveData
                 });
+                // console.log('response: ', response);
+
 
                 if (response && response.success) {
                     let newData = [..._data];
@@ -164,7 +169,7 @@ export default function Scraps({ pathname, user, account, session, workspace }) 
                     orderBy: {
                         created_at: "desc"
                     },
-                    select:{
+                    select: {
                         id: true,
                         name: true,
                         status: true,

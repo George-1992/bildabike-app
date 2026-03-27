@@ -3,8 +3,8 @@
 import { saCreateItem, saGetItems, saUpdateItem, saDeleteItem, saDeleteItems } from "@/actions";
 import { notify } from "@/components/sonnar/sonnar";
 import { PopupModal } from "@/components/other/modals";
-import { cloneDeep, includes } from "lodash";
-import { useState, useEffect } from "react";
+import { cloneDeep } from "lodash";
+import { useState, useEffect, useRef } from "react";
 import FormBuilder from "@/components/formBuilder";
 import Loading from "@/components/other/loading";
 import Image from "next/image";
@@ -12,12 +12,42 @@ import Select from "@/components/select";
 import { toDisplayNum, toDisplayStr } from "@/utils/other";
 import Link from "next/link";
 import { Toggle } from "@/components/other/toggle";
+import Cookies from "js-cookie";
+import DynamicEl from "@/components/other/dynamic";
 
+const defaultFilters = {
+    in_stock: true,
+    profit_margin_percent: 40,
+    sources: ['giantGroup', 'cyclingsportsgroup'],
+    brands: null,
+};
+
+const getCookieValue = (key, fallback) => {
+    try {
+        const value = Cookies.get(key);
+        return value !== undefined ? JSON.parse(value) : fallback;
+    } catch (error) {
+        console.error(`Error parsing cookie "${key}": `, error);
+        return fallback;
+    }
+};
+
+const getInitialFilters = () => ({
+    in_stock: getCookieValue('in_stock', defaultFilters.in_stock),
+    profit_margin_percent: getCookieValue('profit_margin_percent', defaultFilters.profit_margin_percent),
+    sources: getCookieValue('sources', defaultFilters.sources),
+    brands: getCookieValue('brands', defaultFilters.brands),
+});
 
 
 export default function Bikes({ pathname, user, account, session, workspace }) {
     const wId = workspace?.id || null;
     const collectionName = 'bikes';
+
+    const availableSources = ['giantGroup', 'cyclingsportsgroup'];
+
+
+
     const [_isLoading, _setIsLoading] = useState(true);
     const [_data, _setData] = useState([]);
     const [_page, _setPage] = useState({
@@ -28,14 +58,10 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
     });
     const [_editItem, _setEditItem] = useState(null);
 
-    const availableSources = ['giantGroup', 'cyclingsportsgroup'];
     const [_availableBrands, _setAvailableBrands] = useState([]);
-    const [_filters, _setFilters] = useState({
-        in_stock: true,
-        profit_margin_percent: 40,
-        sources: ['giantGroup', 'cyclingsportsgroup'],
-        brands: null,
-    });
+    const [_filters, _setFilters] = useState(() => getInitialFilters());
+    const [_search, _setSearch] = useState('');
+    const _searchTimer = useRef(null);
 
     const sourceImages = {
         'giantGroup': '/images/other/giantGroup.png',
@@ -176,10 +202,21 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
             _setIsLoading(false);
         }
     };
+    const handleSearchChange = (value) => {
+        _setSearch(value);
+        clearTimeout(_searchTimer.current);
+        _searchTimer.current = setTimeout(() => {
+            const newPage = { ..._page, skip: 0, total: 0 };
+            _setPage(newPage);
+            fetchData({ thisPage: newPage, filters: _filters, search: value });
+        }, 400);
+    };
+
     const fetchData = async ({
         thisPage = _page,
         append = false,
-        filters = _filters
+        filters = _filters,
+        search = _search
     }) => {
         try {
             _setIsLoading(true);
@@ -194,15 +231,34 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
                     }
                     : {})
             };
+
+            // apply profit margin filter on SKUs
+            if (typeof filters.profit_margin_percent === 'number') {
+                skuWhere.profit_margin_percent = {
+                    gte: filters.profit_margin_percent
+                };
+            }
             const reqParams = {
                 collection: collectionName,
                 includeCount: true,
                 query: {
                     where: {
                         workspace_id: workspace ? workspace.id : null,
-                        in_stock: inStock,
+                        // in_stock: inStock,
                         source: filters.sources && filters.sources.length > 0 ? { in: filters.sources } : undefined,
-                        skus: filters.brands && filters.brands.length > 0 ? { some: skuWhere } : undefined,
+                        skus: { some: skuWhere },
+                        ...(search ? {
+                            OR: [
+                                { name: { contains: search, mode: 'insensitive' } },
+                                { description: { contains: search, mode: 'insensitive' } },
+                                { skus: { some: { brand: { contains: search, mode: 'insensitive' } } } },
+                                { skus: { some: { item_number: { contains: search, mode: 'insensitive' } } } },
+                                { skus: { some: { size: { contains: search, mode: 'insensitive' } } } },
+                                { skus: { some: { wheel_size_front: { contains: search, mode: 'insensitive' } } } },
+                                { skus: { some: { wheel_size_rear: { contains: search, mode: 'insensitive' } } } },
+                                { skus: { some: { product_type: { contains: search, mode: 'insensitive' } } } },
+                            ]
+                        } : {}),
                     },
                     orderBy: {
                         created_at: 'desc'
@@ -216,7 +272,8 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
                     take: thisPage.take,
                 }
             };
-            // console.log('Fetching with params: ', reqParams);
+            console.log('>>>>>reqParams: ', reqParams);
+
             const response = await saGetItems(reqParams);
 
             console.log(`Fetched ${collectionName}: `, response);
@@ -224,10 +281,10 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
             if (response && response.success) {
                 // Sort bikes by max profit_margin_percent of their SKUs (descending)
                 let sortedData = (response.data || []).sort((a, b) => {
-                    const maxProfitA = a.skus && a.skus.length > 0 
+                    const maxProfitA = a.skus && a.skus.length > 0
                         ? Math.max(...a.skus.map(sku => sku.profit_margin_percent || 0))
                         : 0;
-                    const maxProfitB = b.skus && b.skus.length > 0 
+                    const maxProfitB = b.skus && b.skus.length > 0
                         ? Math.max(...b.skus.map(sku => sku.profit_margin_percent || 0))
                         : 0;
                     return maxProfitB - maxProfitA; // Descending order
@@ -350,6 +407,9 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
             if (source === 'giantGroup') {
                 const baseUrl = 'https://giant2org.my.site.com/product-search-page?q='
                 return baseUrl + bike.name;
+            } else if (source === 'cyclingsportsgroup') {
+                const baseUrl = 'https://b2b.cyclingsportsgroup.com/en/NA/Results.aspx?isquicksearch=1&searchkeyword='
+                return baseUrl + bike.name;
             }
 
             return '#';
@@ -375,12 +435,7 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
         'dealer_price',
         'profit_margin',
         'profit_margin_percent',
-    ]
-
-    useEffect(() => {
-        fetchData({});
-        fetchAvailableBrands(_filters);
-    }, []);
+    ];
 
     const handleFilterChange = (filterName, value) => {
         const nextFilters = {
@@ -392,6 +447,12 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
             ...prev,
             [filterName]: value
         }));
+
+        Cookies.set(filterName, JSON.stringify(value), { expires: 7 });
+
+        if (filterName === 'profit_margin_percent') {
+            return;
+        }
 
         if (filterName === 'in_stock' || filterName === 'sources') {
             fetchAvailableBrands(nextFilters);
@@ -430,81 +491,123 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
         fetchData({ thisPage: newPage, append: false, filters: _filters });
     };
 
+    const refreshData = () => {
+        const resetPage = { ..._page, skip: 0, total: 0 };
+        _setPage(resetPage);
+        _setData([]);
+        fetchData({ thisPage: resetPage, append: false, filters: _filters, search: _search });
+        fetchAvailableBrands(_filters);
+    };
+
+
+    useEffect(() => {
+        fetchData({ filters: _filters });
+        fetchAvailableBrands(_filters);
+    }, []);
+
+
+
     return (
         <div className="container-main flex flex-col gap-4">
-            <div className="flex flex-wrap gap-3 items-center justify-between">
-                <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl">Bikes</h1>
-                    <span className="text-sm text-gray-600">
-                        Showing {_data.length} of {_page.total} bikes
-                    </span>
-                    <div className="flex items-center gap-2">
-                        <label className="text-sm text-gray-600">Per page:</label>
-                        <select 
-                            value={_page.take}
-                            onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
-                            className="form-control w-20"
-                        >
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={30}>30</option>
-                        </select>
-                    </div>
-                </div>
-                <div className="flex-1 flex items-start justify-end gap-4">
-                    {/* Filters */}
-                    <label className="flex items-center gap-2 curcomboboxsor-pointer flex-col ">
-                        <span className="h-7">In Stock</span>
-                        <Toggle checked={_filters.in_stock} onChange={(val) => handleFilterChange('in_stock', val)} />
-                    </label>
-                    <div className="w-32 flex flex-col">
-                        <span className="h-7">Good Profit %</span>
-                        <input
-                            type="number"
-                            value={_filters.profit_margin_percent}
-                            onChange={(e) => handleFilterChange('profit_margin_percent', parseInt(e.target.value))}
-                            className="form-control"
-                            placeholder="Profit %"
-                        />
-                    </div>
 
-                    <div className="w-96 flex flex-col">
-                        <span className="h-7">Sources</span>
-                        <Select
-                            name="sources"
-                            value={_filters.sources}
-                            onChange={(e) => {
-                                const newSources = e?.target?.value || []
-                                // console.log('newSources: ', newSources);
-                                handleFilterChange('sources', newSources.length > 0 ? newSources : null);
-                            }}
-                            options={availableSources.map(src => ({ label: toDisplayStr(src), value: src }))}
-                            multiple={true}
-                            searchable={true}
-                            clearable={true}
-                            placeholder="Select sources..."
-                        />
+            <div className="flex items-center gap-3">
+                <h1 className="text-sm font-semibold">Bikes</h1>
+                <span className="text-sm text-gray-600">
+                    Showing {_data.length} of {_page.total} bikes
+                </span>
+                <button
+                    onClick={refreshData}
+                    disabled={_isLoading}
+                    className="btn btn-sm btn-outline ml-auto"
+                >
+                    {_isLoading ? 'Refreshing...' : 'Refresh'}
+                </button>
+            </div>
+            {/* header */}
+            <div className="w-full h-50 flex bg-white shadow-md rounded-md border border-gray-300">
+                <DynamicEl className="w-full h-50 flex">
+                    <div className="w-[550px] flex flex-col items-start gap-4 p-4">
+                        <div className="w-full flex items-center gap-2">
+                            <span className="w-14 flex-shrink-0">Search</span>
+                            <input
+                                type="text"
+                                value={_search}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="form-control flex-1"
+                                placeholder="Name, brand or item number..."
+                            />
+                        </div>
+                        <div className="w-full flex items-center gap-2">
+                            <span className="w-14 flex-shrink-0">Sources</span>
+                            <Select
+                                name="sources"
+                                value={_filters.sources}
+                                onChange={(e) => {
+                                    const newSources = e?.target?.value || []
+                                    // console.log('newSources: ', newSources);
+                                    handleFilterChange('sources', newSources.length > 0 ? newSources : null);
+                                }}
+                                options={availableSources.map(src => ({ label: toDisplayStr(src), value: src }))}
+                                multiple={true}
+                                searchable={true}
+                                clearable={true}
+                                placeholder="Select sources..."
+                            />
+                        </div>
+                        <div className="w-full flex items-center gap-2">
+                            <span className="w-14 flex-shrink-0">Brands</span>
+                            <Select
+                                name="brands"
+                                value={_filters.brands}
+                                onChange={(e) => {
+                                    const newBrands = e?.target?.value || [];
+                                    handleFilterChange('brands', newBrands.length > 0 ? newBrands : null);
+                                }}
+                                options={_availableBrands.map(brand => ({ label: toDisplayStr(brand), value: brand }))}
+                                multiple={true}
+                                searchable={true}
+                                clearable={true}
+                                placeholder="Select brands..."
+                            />
+                        </div>
                     </div>
-                    <div className="w-80 flex flex-col">
-                        <span className="h-7">Brands</span>
-                        <Select
-                            name="brands"
-                            value={_filters.brands}
-                            onChange={(e) => {
-                                const newBrands = e?.target?.value || [];
-                                handleFilterChange('brands', newBrands.length > 0 ? newBrands : null);
-                            }}
-                            options={_availableBrands.map(brand => ({ label: toDisplayStr(brand), value: brand }))}
-                            multiple={true}
-                            searchable={true}
-                            clearable={true}
-                            placeholder="Select brands..."
-                        />
+                    <div className="w-[250px] flex flex-col items-end gap-4 p-4">
+                        <div className="flex items-center gap-2">
+                            <span className="h-7">Good Profit %</span>
+                            <input
+                                type="number"
+                                value={_filters.profit_margin_percent}
+                                onChange={(e) => handleFilterChange('profit_margin_percent', parseInt(e.target.value))}
+                                className="form-control w-24"
+                                placeholder="Profit %"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm text-gray-600">Per page:</label>
+                            <select
+                                value={_page.take}
+                                onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                                className="form-control w-24"
+                            >
+                                {
+                                    [10, 20, 50, 100].map(num => (
+                                        <option key={num} value={num}>{num}</option>
+                                    ))
+                                }
+                            </select>
+                        </div>
+
                     </div>
-                </div>
+                    <div className="w-96 flex flex-col items-start gap-2 p-4">
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            <span className="h-7">In Stock</span>
+                            <Toggle checked={_filters.in_stock} onChange={(val) => handleFilterChange('in_stock', val)} />
+                        </div>
+                    </div>
+                </DynamicEl>
             </div>
 
-
+            {/* data table */}
             <div className="w-full relative min-h-96 rounded-md">
                 <Loading loading={_isLoading} />
                 {
@@ -576,21 +679,30 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
                                                         bike.skus.map((sku, index) => (
                                                             <tr key={index} className={`border-b border-gray-200 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                                                                 {
-                                                                    skuKeys.map((key) => (
-                                                                        <td key={key} className="px-3 py-2 text-gray-700 whitespace-nowrap">
-                                                                            <span className={`inline-block max-w-[120px] truncate ${key === 'profit_margin_percent' && sku.profit_color ? sku.profit_color + ' px-2 py-1 rounded font-semibold' : ''}`} >
-                                                                                {
-                                                                                    key.includes('price') || key === 'profit_margin'
-                                                                                        ? <span className="font-semibold">{`$${toDisplayNum(sku[key])}`}</span>
-                                                                                        : key === 'profit_margin_percent'
-                                                                                            ? `${toDisplayNum(sku[key])}%`
-                                                                                            : typeof sku[key] === 'boolean'
-                                                                                                ? sku[key] ? 'Yes' : 'No'
-                                                                                                : toDisplayStr(sku[key])
-                                                                                }
-                                                                            </span>
-                                                                        </td>
-                                                                    ))
+                                                                    skuKeys.map((key) => {
+
+                                                                        let val = sku[key];
+                                                                        if (key === 'normal_price' || key === 'consumer_price' || key === 'dealer_price' || key === 'profit_margin') {
+                                                                            val = `$${toDisplayNum(val)}`;
+                                                                        } else if (key === 'profit_margin_percent') {
+                                                                            val = `${toDisplayNum(val)}%`;
+                                                                        } else if (key === 'wheel_front_rear') {
+                                                                            val = `${sku.wheel_size_front || 'N/A'} / ${sku.wheel_size_rear || 'N/A'}`;
+                                                                        } else if (typeof val === 'boolean') {
+                                                                            val = val ? 'Yes' : 'No';
+                                                                        } else if (key === 'item_number') {
+                                                                            val = val;
+                                                                        } else {
+                                                                            val = toDisplayStr(val);
+                                                                        }
+                                                                        return (
+                                                                            <td key={key} className="px-3 py-2 text-gray-700 whitespace-nowrap">
+                                                                                <span className={`inline-block max-w-[120px] truncate ${key === 'profit_margin_percent' && sku.profit_color ? sku.profit_color + ' px-2 py-1 rounded font-semibold' : ''}`}>
+                                                                                    {val}
+                                                                                </span>
+                                                                            </td>
+                                                                        )
+                                                                    })
                                                                 }
                                                             </tr>
                                                         ))
@@ -635,6 +747,8 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
                         </div>
                     )
                 }
+
+                <div className="h-20 md:h-40"></div>
             </div>
 
             {_editItem && <PopupModal isOpen={true} onClose={() => _setEditItem(null)}>

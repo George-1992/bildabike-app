@@ -38,20 +38,7 @@ export default function TopNav({ pathname, data, searchParams, session, user, ac
             <div className="flex-1"></div>
             {/* second part */}
             <div className="flex gap-4 items-center justify-center">
-                {/* <div className="flex items-center space-x-4">
-                    <div type="trigger" className="flex items-center justify-center p-2 bg-gray-200 rounded-full   ">
-                        <Settings className="h-5 w-5 text-gray-600" />
-                    </div>
-                </div> */}
-
-                <div className="w-44 border border-gray-300 h-8 gap-2 flex items-center px-2 rounded-md cursor-not-allowed">
-                    <SearchIcon className="h-4 w-4 text-gray-400" />
-                    <input
-                        className="instead-input w-10/12 bg-white cursor-not-allowed"
-                        placeholder="Search..."
-                        disabled
-                    />
-                </div>
+         
 
                 <div className="flex items-center justify-center p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors cursor-pointer">
                     <Bell className="h-5 w-5 text-gray-600 " />

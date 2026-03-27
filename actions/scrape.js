@@ -1,6 +1,7 @@
 'use server';
 import fs from 'fs';
 import Prisma from "@/services/prisma";
+// import dummyData from "../result_pre_cyclingsportsgroup_1774635040215.json";
 
 const BROWSERLESS_URL = process.env.BROWSERLESS_URL;
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
@@ -23,6 +24,9 @@ export default async function startScrape({
         message: '',
         data: {},
     };
+
+    // console.log('workspaceId: ', workspaceId);
+    // return resObj;
 
     try {
 
@@ -116,15 +120,18 @@ const formatData = ({ data, source }) => {
     try {
         let newData = [];
 
-        if (!data || !Array.isArray(data)) {
-            console.warn('Data is not an array, returning original data');
+        if (!data) {
+            console.warn('formatData >>> Data is not an array, returning [] data');
             return [];
         }
 
-        // console.log('formatData data: ', source);
 
         if (source === 'giantGroup') {
-            for (const item of data) {
+            if (!Array.isArray(data)) {
+                console.warn('formatData >>> Data is not an array for giantGroup, returning [] data');
+                return [];
+            }
+            for (const item of (data && Array.isArray(data)) ? data : []) {
 
                 const rdata = item?.response?.data?.returnValue;
 
@@ -200,103 +207,196 @@ const formatData = ({ data, source }) => {
         }
 
         if (source === 'cyclingsportsgroup') {
-            for (const item of data) {
-                const url = item?.url || '';
-                const isGet = item?.request?.method === 'GET';
-                const allSkus = [];
 
-                // first get bikes top level
-                if (isGet && url.includes('SearchNavigationalProductApi')) {
-                    for (const subItem of item?.response?.data?.['Results'] || []) {
-                        let d = {
-                            id: subItem.Id || "",
-                            name: subItem.DisplayName || "",
-                            source: source || "",
-                            in_stock: subItem.inStock || false,
-                            product_image: subItem.ImageUrl || "",
-                            skus: (subItem?.['Variants'] || []).map(variant => ({
-                                id: variant.VariantId || "",
-                                name: subItem.DisplayName || "",
-                                brand: subItem['Brand'] || "",
-                                size: variant.Size || "",
-                                model_year: subItem['ModelYear'] || "",
-                            })) || []
+            const sourceItems = data?.items || [];
+            const items = [];
+            const allVariantItems = data?.variantItems || [];
+
+            // console.log('>>> formatData sourceItems: ', sourceItems?.length || 0);
+            // console.log('>>> formatData allVariantItems: ', allVariantItems?.length || 0);
+            // console.log('>>> formatData sourceItems[0]: ', sourceItems[0]);
+
+
+            for (const item of sourceItems) {
+                const bike = {}
+                bike.id = item?.['Id'] || "";
+                bike.name = item?.['DisplayName'] || "";
+                bike.source = source || "";
+                bike.in_stock = item?.['InStock'] || false;
+                bike.product_image = item?.['ImageUrl'] || "";
+                bike.skus = []
+
+                // loop over item.Variants and find matching from
+                //  allVariantItems by id, then merge the data
+                if (item?.Variants && Array.isArray(item.Variants)) {
+                    for (const sku of item.Variants) {
+                        const matchedVariant = allVariantItems.find(variant => variant['Number'] === sku['VariantId']);
+                        if (matchedVariant) {
+                            let sd = {
+                                id: matchedVariant.VariantId || matchedVariant.Number || "",
+                                name: matchedVariant.Name || matchedVariant.DisplayName || matchedVariant.ItemDescription || "",
+                                source: source || "",
+                                in_stock: item?.['InStock'] || matchedVariant.InStock || false,
+                                record_url: matchedVariant.RecordUrl || matchedVariant.recordUrl || "",
+                                item_number: matchedVariant.Number || matchedVariant.ItemNumber || "",
+                                brand: matchedVariant.Brand?.BrandName || "",
+                                brand: "Cannondale",
+                                product_type: matchedVariant.ProductType || "",
+                                quantity: matchedVariant.AvailableQuantity || 0,
+                                size: matchedVariant.Size || "",
+                                wheel_size_front: matchedVariant.WheelSizeFront || "",
+                                wheel_size_rear: matchedVariant.WheelSizeRear || "",
+                                level: matchedVariant.Level || "",
+                                model: matchedVariant.Model || "",
+                                model_series_name: matchedVariant.ModelSeriesName || "",
+                                model_year: matchedVariant.ModelYear || "",
+                                item_group_name: matchedVariant.ItemGroupName || "",
+
+                                normal_price: matchedVariant.DealerHiddenPrice || 0,
+                                consumer_price: matchedVariant.MSRPSellingPrice || 0,
+                                dealer_price: matchedVariant.DealerHiddenPrice || 0,
+                                ...getProfitMargin({
+                                    a: matchedVariant.MSRPSellingPrice || 0,
+                                    b: matchedVariant.DealerHiddenPrice || 0,
+                                }),
+                            };
+
+                            bike.skus.push(sd);
                         }
-                        newData.push(d);
                     }
                 }
 
-                // console.log('GetSKUsFromSAP: ', {
-                //     url: url.includes('GetSKUsFromSAP'),
-                //     isGet,
-                // });
-
-                if (!isGet && url.includes('GetSKUsFromSAP')) {
-                    // console.log('item?.response?.data?.Results: ', item?.response?.data);
-
-                    for (const subItem of item?.response?.data || []) {
-                        let sd = {
-                            id: subItem.Number || "",
-                            // name: subItem.Name || "",
-                            source: source || "",
-                            in_stock: subItem.InStock || false,
-                            // product_image: subItem.ImageUrl || "",
-                            record_url: subItem.recordUrl || "",
-                            item_number: subItem.Number || "",
-                            // brand: subItem.Brand || "",
-                            product_type: subItem.ProductType || "",
-                            quantity: subItem.AvailableQuantity || 0,
-                            // size: subItem.Size || "",
-                            // wheel_size_front: subItem.WheelSizeFront || "",
-                            // wheel_size_rear: subItem.WheelSizeRear || "",
-
-                            normal_price: subItem.DealerHiddenPrice || 0,
-                            consumer_price: subItem.MSRPSellingPrice || 0,
-                            dealer_price: subItem.DealerHiddenPrice || 0,
-                            ...getProfitMargin({
-                                a: subItem.MSRPSellingPrice || 0,
-                                b: subItem.DealerHiddenPrice || 0,
-                            }),
-                            // record_url: subItem.recordUrl || "",
-                            // item_group_name: subItem.itemGroupName || "",
-                            // item_number: subItem.ItemNumber || "",
-
-                            // level: subItem.level || "",
-                            // model: subItem.model || "",
-                            // model_series_name: subItem.modelSeriesName || "",
-                            // model_year: subItem.modelYear || "",
-                        }
-
-                        allSkus.push(sd);
-                    }
-                }
-
-                // console.log('allSkus: ', allSkus?.length || 0);
-
-                // loop over all skus and match with the top level bikes' skus , by merging
-                for (const sku of allSkus) {
-                    const matchedBike = newData.find(bike => bike.skus.some(s => s.id === sku.id));
-                    if (matchedBike) {
-                        matchedBike.skus = matchedBike.skus.map(s => {
-                            if (s.id === sku.id) {
-                                return {
-                                    ...s,
-                                    ...sku,
-                                }
-                            }
-                            return s;
-                        });
-                    }
-                }
+                items.push(bike);
             }
+
+            newData = items;
+
+            // for (const item of data) {
+            //     const url = item?.url || '';
+            //     const isGet = item?.request?.method === 'GET';
+            //     const allSkus = [];
+
+            //     // first get bikes top level
+            //     if (isGet && url.includes('SearchNavigationalProductApi')) {
+            //         for (const subItem of item?.response?.data?.['Results'] || []) {
+            //             let d = {
+            //                 id: subItem.Id || "",
+            //                 name: subItem.DisplayName || "",
+            //                 source: source || "",
+            //                 in_stock: subItem.inStock || false,
+            //                 product_image: subItem.ImageUrl || "",
+            //                 skus: (subItem?.['Variants'] || []).map(variant => ({
+            //                     id: variant.VariantId || "",
+            //                     name: subItem.DisplayName || "",
+            //                     brand: subItem['Brand'] || "",
+            //                     size: variant.Size || "",
+            //                     model_year: subItem['ModelYear'] || "",
+            //                 })) || []
+            //             }
+            //             newData.push(d);
+            //         }
+            //     }
+
+            //     // console.log('GetSKUsFromSAP: ', {
+            //     //     url: url.includes('GetSKUsFromSAP'),
+            //     //     isGet,
+            //     // });
+
+            //     if (!isGet && url.includes('GetSKUsFromSAP')) {
+            //         for (const subItem of item?.response?.data || []) {
+            //             let sd = {
+            //                 id: subItem.VariantId || subItem.Number || "",
+            //                 name: subItem.Name || subItem.DisplayName || subItem.ItemDescription || "",
+            //                 source: source || "",
+            //                 in_stock: subItem.InStock || false,
+            //                 record_url: subItem.RecordUrl || subItem.recordUrl || "",
+            //                 item_number: subItem.Number || subItem.ItemNumber || "",
+            //                 brand: subItem.Brand || "",
+            //                 product_type: subItem.ProductType || "",
+            //                 quantity: subItem.AvailableQuantity || 0,
+            //                 size: subItem.Size || "",
+            //                 wheel_size_front: subItem.WheelSizeFront || "",
+            //                 wheel_size_rear: subItem.WheelSizeRear || "",
+            //                 level: subItem.Level || "",
+            //                 model: subItem.Model || "",
+            //                 model_series_name: subItem.ModelSeriesName || "",
+            //                 model_year: subItem.ModelYear || "",
+            //                 item_group_name: subItem.ItemGroupName || "",
+
+            //                 normal_price: subItem.DealerHiddenPrice || 0,
+            //                 consumer_price: subItem.MSRPSellingPrice || 0,
+            //                 dealer_price: subItem.DealerHiddenPrice || 0,
+            //                 ...getProfitMargin({
+            //                     a: subItem.MSRPSellingPrice || 0,
+            //                     b: subItem.DealerHiddenPrice || 0,
+            //                 }),
+            //             }
+
+            //             allSkus.push(sd);
+            //         }
+            //     }
+
+            //     // console.log('allSkus: ', allSkus?.length || 0);
+
+            //     // loop over all skus and match with the top level bikes' skus , by merging
+            //     const unmatchedSkus = [];
+            //     for (const sku of allSkus) {
+            //         const matchedBike = newData.find(bike => bike.skus.some(s => s.id === sku.id));
+            //         if (matchedBike) {
+            //             matchedBike.skus = matchedBike.skus.map(s => {
+            //                 if (s.id === sku.id) {
+            //                     return {
+            //                         ...s,
+            //                         ...sku,
+            //                     }
+            //                 }
+            //                 return s;
+            //             });
+            //         } else {
+            //             unmatchedSkus.push(sku);
+            //         }
+            //     }
+
+            //     if (unmatchedSkus.length > 0) {
+            //         const fallbackGroups = new Map();
+
+            //         for (const sku of unmatchedSkus) {
+            //             const fallbackKey = sku.item_group_name || sku.model || sku.model_series_name || sku.name || sku.id;
+
+            //             if (!fallbackGroups.has(fallbackKey)) {
+            //                 fallbackGroups.set(fallbackKey, {
+            //                     id: fallbackKey,
+            //                     name: sku.item_group_name || sku.model || sku.model_series_name || sku.name || sku.id,
+            //                     source: source || "",
+            //                     in_stock: sku.in_stock || false,
+            //                     product_image: "",
+            //                     record_url: sku.record_url || "",
+            //                     model_year: sku.model_year || "",
+            //                     skus: [],
+            //                 });
+            //             }
+
+            //             const bike = fallbackGroups.get(fallbackKey);
+            //             bike.in_stock = bike.in_stock || sku.in_stock;
+            //             bike.record_url = bike.record_url || sku.record_url || "";
+            //             bike.model_year = bike.model_year || sku.model_year || "";
+            //             bike.skus.push(sku);
+            //         }
+
+            //         newData.push(...Array.from(fallbackGroups.values()));
+            //     }
+            // }
         }
         return newData;
 
     } catch (error) {
-        console.error('Error formatting data:', error);
+        console.error('ERROR: formatting data:', error);
         return [];
     }
 };
+
+
+
 // giantGroup
 const giantGroup = async () => {
     let resObj = {
@@ -486,7 +586,7 @@ const giantGroup = async () => {
     }
 };
 //cyclingsportsgroup
-const cyclingSportsGroup = async () => {
+const cyclingSportsGroup_OLD = async () => {
     let resObj = {
         success: false,
         message: 'aaaaaaaaaa',
@@ -547,6 +647,7 @@ const cyclingSportsGroup = async () => {
         ]);
 
         // Set up response interception BEFORE any navigation
+        // collect data from api calls that include "sitecore" in the URL, and store in apiDataStore
         page.on('response', async (response) => {
             const url = response.url();
             const funcPush = (data) => {
@@ -602,10 +703,35 @@ const cyclingSportsGroup = async () => {
             }
         });
 
-        // scrap data
-        const scrapLinks = [
-            'https://b2b.cyclingsportsgroup.com/en/NA/ProductCategory.aspx?id=315c616e-5ea4-4f51-b4eb-acf780db1914&mode=list&hideSoldOut=false',
-        ]
+        // find ddBikes id div and get all uniqe hrefs under it
+        const bikeLinks = await page.evaluate(() => {
+            const excludeStrings = [
+                '#', 'javascript:void(0)',
+                'db4d07de-2c14-4397-a08f-0f89fb550002',
+                '1d5fb1a7-4e01-473e-8e5e-355b90bf5714',
+            ];
+            const container = document.querySelector('#ddBikes');
+            if (!container) {
+                return [];
+            }
+            const anchors = container.querySelectorAll('a');
+            const hrefs = new Set();
+            anchors.forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && href.startsWith('/') && !excludeStrings.some(str => href.includes(str))) {
+                    hrefs.add(`https://b2b.cyclingsportsgroup.com${href}`);
+                }
+            });
+            return Array.from(hrefs);
+
+        });
+        const scrapLinks = bikeLinks.slice(0, 5); // limit to first 5 links for testing
+
+
+        // // scrap data
+        // const scrapLinks = [
+        //     'https://b2b.cyclingsportsgroup.com/en/NA/ProductCategory.aspx?id=315c616e-5ea4-4f51-b4eb-acf780db1914&mode=list&hideSoldOut=false',
+        // ];
 
         // visit each link and wait for the network to be idle
         for (const link of scrapLinks) {
@@ -624,6 +750,338 @@ const cyclingSportsGroup = async () => {
         resObj.htmls = htmls;
         resObj.data = apiDataStore;
         resObj.apiDataStore = apiDataStore;
+        // resObj.bikeLinks = bikeLinks;
+
+        return resObj;
+    } catch (error) {
+        console.error('Error in cyclingSportsGroup function:', error);
+        resObj.success = false;
+        resObj.message = error.message;
+        return resObj;
+    }
+};
+const cyclingSportsGroup_OLD_2 = async () => {
+    let resObj = {
+        success: false,
+        message: '',
+        data: {},
+    };
+    try {
+        const screenshots = [];
+        const htmls = [];
+        const apiDataStore = [];
+        const skus = ["C68554M10MD", "C68554M10LG", "C68554M20MD", "C68554M20LG"];
+
+
+
+        // Set the viewport to a desktop size, for example 1920x1080
+        await page.setViewport({
+            width: 1920,
+            height: 1080,
+        });
+
+        // got to https://b2b.cyclingsportsgroup.com/Login
+        await page.goto('https://b2b.cyclingsportsgroup.com/Login', { waitUntil: 'networkidle2', timeout: 240000 });
+
+        // fill username and password and click login button
+        await page.evaluate((userName, password) => {
+            const container = document.querySelector('#LoginPage');
+            if (!container) {
+                throw new Error('Login container not found');
+            }
+            const usernameInput = container.querySelector("input[name='UserId']");
+            const passwordInput = container.querySelector("input[name='Password']");
+            const loginButton = container.querySelector("input[type='submit']");
+
+            if (!loginButton) {
+                throw new Error('Login button not found');
+            }
+
+            if (usernameInput) {
+                usernameInput.value = userName;
+                usernameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                usernameInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            if (passwordInput) {
+                passwordInput.value = password;
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, userName, password);
+
+        // Click login and wait for navigation
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 240000 }),
+            page.evaluate(() => {
+                const loginButton = document.querySelector('#LoginPage input[type="submit"]');
+                if (loginButton) {
+                    loginButton.click();
+                }
+            })
+        ]);
+
+        // Make API request from inside the logged-in browser context
+        let debugData = null;
+        try {
+            const sapPayload = {
+                skus: skus,
+                reqDate: new Date().toISOString().slice(0, 10),
+            };
+
+            debugData = await page.evaluate(async (payload) => {
+                const url = 'https://b2b.cyclingsportsgroup.com/api/sitecore/B2BProducts/GetSKUsFromSAP';
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json, text/plain, */*',
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers,
+                    body: JSON.stringify(payload),
+                });
+
+                const rawText = await response.text();
+                let parsedData = null;
+
+                try {
+                    parsedData = rawText ? JSON.parse(rawText) : null;
+                } catch (parseError) {
+                    parsedData = {
+                        parseError: parseError.message,
+                        rawText,
+                    };
+                }
+
+                return {
+                    url,
+                    request: {
+                        method: 'POST',
+                        payload: JSON.stringify(payload),
+                        headers,
+                    },
+                    response: {
+                        status: response.status,
+                        ok: response.ok,
+                        headers: Object.fromEntries(response.headers.entries()),
+                        data: parsedData,
+                    }
+                };
+            }, sapPayload);
+
+
+            if (!debugData?.response?.ok) {
+                throw new Error(`CSG API request failed with status ${debugData?.response?.status || 'unknown'}`);
+            }
+        } catch (error) {
+            console.error('Error making CSG API request:', error);
+            debugData = {
+                error: error.message,
+            };
+        }
+
+
+        resObj.success = true;
+        resObj.message = 'Scrape completed successfully';
+        resObj.screenshots
+            ? resObj.screenshots.push(...screenshots)
+            : resObj.screenshots = screenshots;
+        // resObj.htmls = htmls;
+        resObj.data = [debugData];
+        // resObj.debug = debugData;
+
+        // resObj.apiDataStore = apiDataStore;
+        // resObj.bikeLinks = bikeLinks;
+
+        return resObj;
+    } catch (error) {
+        console.error('Error in cyclingSportsGroup function:', error);
+        resObj.success = false;
+        resObj.message = error.message;
+        return resObj;
+    }
+};
+const cyclingSportsGroup = async () => {
+    let resObj = {
+        success: false,
+        message: 'aaaaaaaaaa',
+        data: {},
+    };
+    try {
+        const screenshots = [];
+        const htmls = [];
+
+
+
+        // Set the viewport to a desktop size, for example 1920x1080
+        await page.setViewport({
+            width: 1920,
+            height: 1080,
+        });
+
+        // got to https://b2b.cyclingsportsgroup.com/Login
+        await page.goto('https://b2b.cyclingsportsgroup.com/Login', { waitUntil: 'networkidle2', timeout: 240000 });
+
+        // fill username and password and click login button
+        await page.evaluate((userName, password) => {
+            const container = document.querySelector('#LoginPage');
+            if (!container) {
+                throw new Error('Login container not found');
+            }
+            const usernameInput = container.querySelector("input[name='UserId']");
+            const passwordInput = container.querySelector("input[name='Password']");
+            const loginButton = container.querySelector("input[type='submit']");
+
+            if (!loginButton) {
+                throw new Error('Login button not found');
+            }
+
+            if (usernameInput) {
+                usernameInput.value = userName;
+                usernameInput.dispatchEvent(new Event('input', { bubbles: true }));
+                usernameInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            if (passwordInput) {
+                passwordInput.value = password;
+                passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
+                passwordInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, userName, password);
+
+        // Click login and wait for navigation
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 240000 }),
+            page.evaluate(() => {
+                const loginButton = document.querySelector('#LoginPage input[type="submit"]');
+                if (loginButton) {
+                    loginButton.click();
+                }
+            })
+        ]);
+
+
+        // find ddBikes id div and get all uniqe hrefs under it
+        const bikeLinks = await page.evaluate(() => {
+            const excludeStrings = [
+                '#', 'javascript:void(0)',
+                'db4d07de-2c14-4397-a08f-0f89fb550002',
+                '1d5fb1a7-4e01-473e-8e5e-355b90bf5714',
+            ];
+            const container = document.querySelector('#ddBikes');
+            if (!container) {
+                return [];
+            }
+            const anchors = container.querySelectorAll('a');
+            const hrefs = new Set();
+            anchors.forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && href.startsWith('/') && !excludeStrings.some(str => href.includes(str))) {
+                    hrefs.add(`https://b2b.cyclingsportsgroup.com${href}`);
+                }
+            });
+            return Array.from(hrefs);
+
+        });
+
+        const _sIds = bikeLinks.map(link => {
+            // extract 4f2567fc-7e03-47c0-833e-121c8c378beb from
+            // https://b2b.cyclingsportsgroup.com/en/NA/ProductCategory.aspx?id=4f2567fc-7e03-47c0-833e-121c8c378beb&mode=list&hideSoldOut=false
+            const match = link.match(/id=([^&]+)/);
+            return match ? match[1] : null;
+        });
+
+        const toScrapeLinks = _sIds.map(id => {
+            return `https://b2b.cyclingsportsgroup.com/api/sitecore/B2BProducts/SearchNavigationalProductApi?Id=${id}&pageSize=1000`;
+        })
+
+        // open all of the toScrapeLinks
+        // and save the output json
+        const items = [];
+        for (const link of toScrapeLinks) {
+            try {
+                const response = await page.goto(link, { waitUntil: 'networkidle2', timeout: 240000 });
+                const json = await response.json();
+                if (json['Results']) {
+                    items.push(...json['Results'])
+                }
+            }
+            catch (error) {
+                console.error(`Error fetching ${link}:`, error);
+                items.push({
+                    url: link,
+                    error: error.message,
+                });
+            }
+        }
+
+        const allVariantIds = [];
+        items.forEach(item => {
+            if (item.Variants) {
+                item.Variants.forEach(variant => {
+                    if (variant.VariantId) {
+                        allVariantIds.push(variant.VariantId);
+                    }
+                });
+            }
+        });
+
+        // fetch by 200 batches from
+        // https://b2b.cyclingsportsgroup.com/api/sitecore/B2BProducts/GetSKUsFromSAP
+        const allVariantItems = [];
+        for (let i = 0; i < allVariantIds.length; i += 200) {
+            const batch = allVariantIds.slice(i, i + 200);
+            try {
+                const response = await page.evaluate(async (batch) => {
+                    const url = 'https://b2b.cyclingsportsgroup.com/api/sitecore/B2BProducts/GetSKUsFromSAP';
+                    const reqDate = new Date().toISOString().split('T')[0];
+
+                    const fetchResponse = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json, text/plain, */*',
+                        },
+                        body: JSON.stringify({
+                            skus: batch,
+                            reqDate,
+                        }),
+                    });
+
+                    if (!fetchResponse.ok) {
+                        throw new Error(`GetSKUsFromSAP failed: ${fetchResponse.status} ${fetchResponse.statusText}`);
+                    }
+
+                    return fetchResponse.json();
+                }, batch);
+
+                const rows = Array.isArray(response?.data)
+                    ? response.data
+                    : Array.isArray(response)
+                        ? response
+                        : [];
+                allVariantItems.push(...rows);
+            } catch (error) {
+                console.error(`Error fetching SKUs for batch ${i}-${i + 200}:`, error);
+            }
+        }
+
+        resObj.success = true;
+        resObj.message = 'Scrape completed successfully';
+        resObj.screenshots
+            ? resObj.screenshots.push(...screenshots)
+            : resObj.screenshots = screenshots;
+        // resObj.htmls = htmls;
+        resObj.data = {
+            items: items,
+            variantItems: allVariantItems,
+        };
+        // resObj.bikeLinks = bikeLinks;
+        // resObj._sIds = _sIds;
+        // resObj.toScrapeLinks = toScrapeLinks;
+        // resObj.items = items;
+        // resObj.allVariantIds = allVariantIds;
+        // resObj.allVariantItems = allVariantItems.length;
 
         return resObj;
     } catch (error) {
@@ -771,6 +1229,8 @@ const scrap = async ({ workspaceId } = {}) => {
         message: '',
         data: {},
     };
+
+
     try {
         const funcStr = giantGroup.toString();
         // Match the function body between the first { and last }
@@ -778,26 +1238,55 @@ const scrap = async ({ workspaceId } = {}) => {
             const funcStr = func.toString();
             const match = funcStr.match(/^async\s*\(\)\s*=>\s*\{([\s\S]*)\}\s*$/);
             return match ? match[1].trim() : funcStr;
-        }
+        };
 
         const tasks = [
             {
                 name: 'giantGroup',
                 stealth: true,
-                timeout: 240000,
+                timeout: 360000,
                 data: `export default async function ({ page }) { const userName = "${GG_USERNAME}"; const password = "${GG_PASSWORD}";\n${getFuncBody(giantGroup)}\n}`.trim(),
                 isLocalSave: false,
                 result: null,
+                getResult: (obj) => {
+                    const result = {
+                        ...obj,
+                        clcError: obj?.clcError || null,
+                        data: formatData({
+                            data: obj.data,
+                            source: 'giantGroup'
+                        })
+                    };
+                    return result;
+                },
             },
             {
                 name: 'cyclingsportsgroup',
                 stealth: true,
-                timeout: 240000,
+                timeout: 360000,
                 data: `export default async function ({ page }) { const userName = "${CCG_USERNAME}"; const password = "${CCG_PASSWORD}";\n${getFuncBody(cyclingSportsGroup)}\n}`.trim(),
                 isLocalSave: false,
                 result: null,
                 isDbSave: true,
                 workspaceId,
+                // logger: (obj) => {
+                //     console.log('cyclingsportsgroup logger: ', obj);
+                // },
+                getResult: (obj) => {
+                    // console.log('getResult obj', obj);
+                    const formattedData = formatData({
+                        data: obj?.data,
+                        source: 'cyclingsportsgroup'
+                    })
+                    // console.log('formattedData', formattedData);
+
+                    const result = {
+                        ...obj,
+                        data: formattedData
+                    };
+
+                    return result;
+                }
             },
             // {
             //     name: 'qbp',
@@ -809,11 +1298,15 @@ const scrap = async ({ workspaceId } = {}) => {
             //     isDbSave: false,
             //     workspaceId,
             // }
-        ]
-
-        // console.log('tasks >>> ', tasks.map(t => ({ name: t.name, dataLength: t.data.length, stealth: t.stealth, timeout: t.timeout })));
+        ];
 
         const processTask = async ({ task }) => {
+
+            // // =============test code start===========
+            // return task.getResult(dummyData)
+            // // =============test code end===========
+
+
             let url = `${BROWSERLESS_URL}/function?token=${BROWSERLESS_TOKEN}`;
             if (task.timeout) {
                 url += `&timeout=${task.timeout}`;
@@ -850,17 +1343,11 @@ const scrap = async ({ workspaceId } = {}) => {
             }
 
             const resultPre = JSON.parse(responseText);
-            // return resultPre;
 
-            const result = {
-                ...resultPre,
-                clcError: resultPre?.clcError || null,
-                data: formatData({
-                    data: resultPre.data,
-                    source: task.name
-                })
-            };
 
+            const result = task.getResult
+                ? task.getResult(resultPre)
+                : resultPre;
 
             // if screenshots exist save in screenshots folder
             if (result.screenshots && result.screenshots.length > 0) {
@@ -873,6 +1360,10 @@ const scrap = async ({ workspaceId } = {}) => {
                     fs.writeFileSync(filePath, buffer);
                     console.log('Saved screenshot:', filePath);
                 });
+            }
+
+            if (task.logger) {
+                task.logger(result);
             }
 
             return result;
@@ -905,7 +1396,7 @@ const scrap = async ({ workspaceId } = {}) => {
             }, null, 2));
             console.log('Saved result:', resultFilePath);
 
-        }
+        };
 
 
         for (const task of tasks) {
@@ -959,9 +1450,13 @@ const saveDataToDB = async ({ data, workspaceId }) => {
                     sd.connect = {
                         skus: dataItem.skus
                     }
+                    delete sd.skus;
                 }
                 dtoSaveData.push(sd);
             }
+
+            // console.log(' dtoSaveData[0]: ', dtoSaveData[0]);
+            // return;
 
             // First, upsert all bikes
             for (const sd of dtoSaveData) {

@@ -2,7 +2,6 @@
 'use client';
 
 import { SignoutEl } from "@/components/auth";
-import Workspaces from "@/components/other/workspaces";
 import { pagesMapSidebar } from "@/components/pages";
 import { cn } from "@/libs/utils";
 import {
@@ -138,19 +137,19 @@ export default function Sidebar({
             }`}>
             {/* Header */}
             <div className={cn(
-                'w-full h-28 overflow-hidden border-b-[1.5px] border-gray-200 flex flex-col',
+                'w-full h-28 overflow-hidden border-b-[1.5px] bg-zinc-100 border-gray-200 flex flex-col',
                 isCollapsed ? 'items-center justify-center py-1 px-1' : 'items-start py-3 px-3',
             )}>
-                <div className="flex items-center justify-between ">
-                    <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+                <div className="w-full flex items-center justify-center ">
+                    <div className={`flex flex-col items-center justify-center gap-1 ${isCollapsed ? 'justify-center' : ''}`}>
                         <Image
                             src="/images/logos/main.png"
                             alt="Logo"
-                            width={25}
-                            height={25}
+                            width={50}
+                            height={50}
                         />
                         {!isCollapsed && (
-                            <div className="text-lg font-semibold ">
+                            <div className="text-xl font-semibold font-mono ">
                                 {PROJECT_NAME || 'My App'}
                             </div>
                         )}
@@ -165,11 +164,6 @@ export default function Sidebar({
                     </button>
                 </div>
 
-                <Workspaces
-                    session={session}
-                    user={user} account={account}
-                    isCollapsed={isCollapsed} workspaces={workspaces}
-                />
 
             </div>
 
