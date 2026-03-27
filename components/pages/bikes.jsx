@@ -342,7 +342,7 @@ export default function Bikes({ pathname, user, account, session, workspace }) {
         } catch (error) {
             console.error('Error fetching brands: ', error);
         }
-    }
+    };
     const handlePageChange = (newPage) => {
         _setPage(newPage);
         fetchData(newPage);

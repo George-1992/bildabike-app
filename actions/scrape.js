@@ -18,6 +18,7 @@ const QBP_PASSWORD = process.env.QBP_PASSWORD || '';
 export default async function startScrape({
     data = null,
     workspaceId = null,
+    callback = null,
 }) {
     let resObj = {
         success: false,
@@ -70,6 +71,14 @@ export default async function startScrape({
         }
 
         saveDataToDB({ data: result.data, workspaceId });
+        if (callback && typeof callback === 'function') {
+            const cd = [];
+            result.data.forEach(item => {
+                if (item.result && item.result.data)
+                    cd.push(...item.result.data);
+            });
+            callback(cd);
+        };
         resObj = result;
 
 
