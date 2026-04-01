@@ -72,7 +72,7 @@ export default async function startScrape({
             });
         }
 
-        saveDataToDB({ data: result.data, workspaceId });
+        // saveDataToDB({ data: result.data, workspaceId });
         if (callback && typeof callback === 'function') {
             const cd = [];
             result.data.forEach(item => {
@@ -1413,6 +1413,7 @@ const scrap = async ({ workspaceId } = {}) => {
 
         };
 
+        console.log('Starting tasks... total tasks: ', tasks.length);
 
         for (const task of tasks) {
             console.log('=======================');
@@ -1439,7 +1440,6 @@ const scrap = async ({ workspaceId } = {}) => {
 
             console.log(`Completed task: ${task.name}, message: ${thisResult.message}`);
             console.log('');
-            console.log('=======================');
         }
 
         resObj.success = true;
