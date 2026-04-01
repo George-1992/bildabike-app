@@ -1511,19 +1511,43 @@ const saveDataToDB = async ({ data, workspaceId }) => {
                 });
             }
 
+            const skuIds = dtoSaveData.flatMap(sd =>
+                sd.connect?.skus?.map(sku => sku.id).filter(Boolean) || []
+            );
+
+            const existingSkus = skuIds.length
+                ? await Prisma.skus.findMany({
+                    where: {
+                        id: { in: skuIds }
+                    },
+                    select: {
+                        id: true,
+                        profit_margin: true,
+                    }
+                })
+                : [];
+
+            const existingSkuProfitMarginMap = new Map(
+                existingSkus.map(existingSku => [existingSku.id, existingSku.profit_margin])
+            );
+
             // Then, upsert all SKUs (now that bikes exist)
             for (const sd of dtoSaveData) {
                 if (sd.connect?.skus?.length) {
                     for (const sku of sd.connect.skus) {
+                        const prevProfitMargin = existingSkuProfitMarginMap.get(sku.id) ?? 0;
+
                         await Prisma.skus.upsert({
                             where: { id: sku.id },
                             update: {
                                 ...sku,
+                                prev_profit_margin: prevProfitMargin,
                                 bike: { connect: { id: sd.id } },
                                 workspace: { connect: { id: workspaceId } }
                             },
                             create: {
                                 ...sku,
+                                prev_profit_margin: prevProfitMargin,
                                 bike: { connect: { id: sd.id } },
                                 workspace: { connect: { id: workspaceId } }
                             }

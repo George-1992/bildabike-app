@@ -154,6 +154,7 @@ model skus {
   normal_price          Float   @default(0)
   consumer_price        Float   @default(0)
   dealer_price          Float   @default(0)
+  prev_profit_margin    Float   @default(0)
   profit_margin         Float   @default(0)
   profit_margin_percent Float   @default(0)
   in_stock              Boolean @default(false)
