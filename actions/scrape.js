@@ -3,6 +3,8 @@ import fs from 'fs';
 import Prisma from "@/services/prisma";
 // import dummyData from "../result_pre_cyclingsportsgroup_1774635040215.json";
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 const BROWSERLESS_URL = process.env.BROWSERLESS_URL;
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
 
@@ -1314,6 +1316,7 @@ const scrap = async ({ workspaceId } = {}) => {
             // // =============test code start===========
             // return task.getResult(dummyData)
             // // =============test code end===========
+            console.log(`Processing task: ${task.name}...`);
 
 
             let url = `${BROWSERLESS_URL}/function?token=${BROWSERLESS_TOKEN}`;
@@ -1337,7 +1340,7 @@ const scrap = async ({ workspaceId } = {}) => {
                 body: task.data,
             });
             let end = Date.now();
-            console.log(`Fetch time: ${(end - start) / 1000} seconds`);
+            console.log(`scrap >>> processTask >>>Done, Fetch time: ${(end - start) / 1000} seconds, task:`, task.name, 'success: ', fetchRes.ok);
 
             console.log('Response status:', fetchRes.status);
             const responseText = await fetchRes.text();
@@ -1359,22 +1362,25 @@ const scrap = async ({ workspaceId } = {}) => {
                 : resultPre;
 
             // if screenshots exist save in screenshots folder
-            if (result.screenshots && result.screenshots.length > 0) {
-                if (!fs.existsSync('screenshots')) {
-                    fs.mkdirSync('screenshots');
+            if (IS_DEV) {
+                if (result.screenshots && result.screenshots.length > 0) {
+                    if (!fs.existsSync('screenshots')) {
+                        fs.mkdirSync('screenshots');
+                    }
+                    result.screenshots.forEach((screenshot, index) => {
+                        const buffer = Buffer.from(screenshot, 'base64');
+                        const filePath = `screenshots/screenshot_${Date.now()}_${index}.png`;
+                        fs.writeFileSync(filePath, buffer);
+                        console.log('Saved screenshot:', filePath);
+                    });
                 }
-                result.screenshots.forEach((screenshot, index) => {
-                    const buffer = Buffer.from(screenshot, 'base64');
-                    const filePath = `screenshots/screenshot_${Date.now()}_${index}.png`;
-                    fs.writeFileSync(filePath, buffer);
-                    console.log('Saved screenshot:', filePath);
-                });
             }
 
             if (task.logger) {
                 task.logger(result);
             }
 
+            console.log(`scrap >>> processTask >>> Processed result for task: ${task.name}, message: ${result.message}`);
             return result;
 
             // save htmls in htmls folder
@@ -1409,8 +1415,12 @@ const scrap = async ({ workspaceId } = {}) => {
 
 
         for (const task of tasks) {
+            console.log('=======================');
+            console.log(`Starting task: ${task.name}`);
+
+
             const thisResult = await processTask({ task });
-            // console.log(`thisResult >>> `, thisResult);
+            // console.log(`thisResult >>> `, task.name, 'thisResult: ', thisResult.message)
             task.result = thisResult;
 
             // if (task.isLocalSave) {
@@ -1419,11 +1429,17 @@ const scrap = async ({ workspaceId } = {}) => {
             //     console.log('Saved local result:', localFilePath);
             // }
             if (task.isDbSave) {
+                console.log('scrap >>> Saving to DB for task: ', task.name);
                 await saveDataToDB({
                     data: [{ name: task.name, result: thisResult }],
                     workspaceId: task.workspaceId,
                 });
+                console.log('Saved to DB: ', task.name);
             }
+
+            console.log(`Completed task: ${task.name}, message: ${thisResult.message}`);
+            console.log('');
+            console.log('=======================');
         }
 
         resObj.success = true;
@@ -1432,7 +1448,7 @@ const scrap = async ({ workspaceId } = {}) => {
         return resObj;
 
     } catch (error) {
-        console.error('Error in scrap function:', error);
+        console.error('scrap >>> Error in scrap function:', error);
         resObj.success = false;
         resObj.message = error.message;
 
