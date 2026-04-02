@@ -18,9 +18,11 @@ export const fairharbor = () => {
 
 export const getSkusForEmail = async ({
     limit = 10,
+    minPrice = 60,
     profit_margin_percent = 40,
     negativeKeywords = ['Surround Rails'],
     data = [],
+
 }) => {
 
     const isOK = (sku, item) => {
@@ -76,7 +78,14 @@ export const getSkusForEmail = async ({
             console.log(`SKUs for email saved to ${filePath}`);
         };
 
-        const limitedData = allSkus.slice(0, limit);
+        // slice all not meeting minPrice
+        const filteredSkus = allSkus.filter(sku => {
+            const p = sku.dealer_price || sku.normal_price || 0;
+            return p >= minPrice;
+        });
+        console.log(`SKUs after filtering by minPrice (${minPrice}): `, filteredSkus.length);
+
+        const limitedData = filteredSkus.slice(0, limit);
         console.log("Matching data to send: ", limitedData.length, ' from total: ', data.length);
 
         // Fetch all matching SKUs in one query and merge prev margin into the payload.

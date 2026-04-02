@@ -20,6 +20,7 @@ export async function POST(request) {
         const apiKey = request.headers.get('x-api-key') || '';
         const limit = requestBody.limit || 10;
         const profit_margin_percent = requestBody.profit_margin_percent || 40;
+        const minPrice = requestBody.minPrice || 60;
 
         const baseNegativeKeywords = ['Surround Rails'];
         const negativeKeywords = requestBody.negative_keywords || baseNegativeKeywords;
@@ -54,6 +55,7 @@ export async function POST(request) {
 
                         const toSendData = await getSkusForEmail({
                             limit: limit,
+                            minPrice: minPrice,
                             profit_margin_percent: profit_margin_percent,
                             negativeKeywords: negativeKeywords,
                             data: result,
