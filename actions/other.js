@@ -18,7 +18,7 @@ export const fairharbor = () => {
 
 export const getSkusForEmail = async ({
     limit = 10,
-    minPrice = 60,
+    minPrice = 71,
     profit_margin_percent = 40,
     negativeKeywords = ['Surround Rails'],
     data = [],
@@ -39,7 +39,9 @@ export const getSkusForEmail = async ({
                 itemName.includes(String(kw || '').toLowerCase())
             );
 
-            return marginPercent >= threshold && !hasNegativeKeyword;
+            const p = sku.dealer_price || sku.normal_price || 0;
+
+            return marginPercent >= threshold && !hasNegativeKeyword && p >= minPrice;
         } catch (error) {
             console.error("Error in isOK function: ", error);
             return false;
@@ -78,11 +80,8 @@ export const getSkusForEmail = async ({
             console.log(`SKUs for email saved to ${filePath}`);
         };
 
-        // slice all not meeting minPrice
-        const filteredSkus = allSkus.filter(sku => {
-            const p = sku.dealer_price || sku.normal_price || 0;
-            return p >= minPrice;
-        });
+        // slice all not meeting minPrice / margin / negative keywords
+        const filteredSkus = allSkus.filter(sku => isOK(sku, sku));
         console.log(`SKUs after filtering by minPrice (${minPrice}): `, filteredSkus.length);
 
         const limitedData = filteredSkus.slice(0, limit);
