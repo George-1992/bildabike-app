@@ -1,15 +1,15 @@
 'use client';
 
+import { fairharbor, testButtonFunction } from "@/actions/other";
 import startScrape from "@/actions/scrape";
 
 export default function TestButton({ workspace }) {
     const handleClick = async () => {
-        console.log('Button clicked!');
-        const scrapeRes = await startScrape({
-            workspaceId: workspace.id,
-            source: 'test'
+        console.log('Button clicked!', workspace);
+        // fairharbor();
+        testButtonFunction({
+            workspace,
         });
-        console.log('Scrape result:', scrapeRes);
     }
     return (
         <div className="fixed bottom-4 right-4 bg-red-100 p-2 rounded">

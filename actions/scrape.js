@@ -28,8 +28,6 @@ export default async function startScrape({
         data: {},
     };
 
-    // console.log('workspaceId: ', workspaceId);
-    // return resObj;
 
     try {
 
@@ -47,6 +45,7 @@ export default async function startScrape({
         }
 
         if (!workspaceId) {
+            console.error('No workspaceId provided for scraping');
             resObj.success = false;
             resObj.message = 'No workspaceId provided for scraping';
             return resObj;
@@ -76,12 +75,26 @@ export default async function startScrape({
         if (callback && typeof callback === 'function') {
             const cd = [];
             result.data.forEach(item => {
-                if (item.result && item.result.data)
-                    cd.push(...item.result.data);
+                const d = Array.isArray(item.result)
+                    ? item.result
+                    : Array.isArray(item.result?.data) ? item.result.data : [];
+
+                cd.push(...d);
+                if (cd.length === 0) {
+                    console.warn('callback >>> No data to send in callback');
+                }
             });
             callback(cd);
         };
         resObj = result;
+
+
+        // save locally if its dev
+        if (IS_DEV) {
+            const filePath = `./data/startScrape_result.json`;
+            fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+            console.log(`startScrape >>> Result saved locally at ${filePath}`);
+        }
 
 
         return resObj;

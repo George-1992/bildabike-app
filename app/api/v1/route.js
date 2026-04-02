@@ -1,3 +1,4 @@
+import { getSkusForEmail } from "@/actions/other";
 import startScrape from "@/actions/scrape";
 import Prisma from "@/services/prisma";
 
@@ -40,26 +41,7 @@ export async function POST(request) {
             return Response.json(resObj, { status: 404 })
         }
 
-        const isOK = (sku, item) => {
-            try {
-                const keywords = Array.isArray(negativeKeywords)
-                    ? negativeKeywords
-                    : baseNegativeKeywords;
 
-                const itemName = String(item?.name || '').toLowerCase();
-                const marginPercent = Number(sku?.profit_margin_percent || 0);
-                const threshold = Number(profit_margin_percent || 0);
-
-                const hasNegativeKeyword = keywords.some((kw) =>
-                    itemName.includes(String(kw || '').toLowerCase())
-                );
-
-                return marginPercent >= threshold && !hasNegativeKeyword;
-            } catch (error) {
-                console.error("Error in isOK function: ", error);
-                return false;
-            }
-        }
 
         const wId = workspace.id;
         // initate scrapper 
@@ -69,67 +51,20 @@ export async function POST(request) {
                 try {
                     if (N8N_CALLBACK_URL) {
                         console.log("Sending data to n8n...");
-                        const toSendData = [];
-                        if (result && Array.isArray(result)) {
-                            for (const item of result) {
-                                if (item && item.connect && item.connect.skus && Array.isArray(item.connect.skus) && item.connect.skus.length > 0) {
-                                    for (const sku of item.connect.skus) {
-                                        if (isOK(sku, item)) {
-                                            if (sku.dealer_price && parseFloat(sku.dealer_price) > 30) {
-                                                toSendData.push({
-                                                    ...sku,
-                                                    product_image: item.product_image,
-                                                    name: item.name,
-                                                });
-                                            }
-                                        }
-                                    }
 
-                                }
-                            }
-                        };
-
-                        // sort toSendData by profit_margin_percent desc
-                        // and not more than limit items
-                        toSendData.sort((a, b) => {
-                            if (a.profit_margin_percent > b.profit_margin_percent) return -1;
-                            if (a.profit_margin_percent < b.profit_margin_percent) return 1;
-                            return 0;
+                        const toSendData = await getSkusForEmail({
+                            limit: limit,
+                            profit_margin_percent: profit_margin_percent,
+                            negativeKeywords: negativeKeywords,
+                            data: result,
                         });
-                        const limitedData = toSendData.slice(0, limit);
-                        console.log("Matching data to send: ", limitedData.length, ' from total: ', result.length);
-
-                        // Fetch all matching SKUs in one query and merge prev margin into the payload.
-                        const skuIds = limitedData.map(item => item.id).filter(Boolean);
-                        const dbSkus = skuIds.length
-                            ? await Prisma.skus.findMany({
-                                where: {
-                                    id: { in: skuIds },
-                                },
-                                select: {
-                                    id: true,
-                                    prev_profit_margin: true,
-                                    profit_margin: true,
-                                },
-                            })
-                            : [];
-
-                        const dbSkuMap = new Map(dbSkus.map((sku) => [sku.id, sku]));
-                        const skusWithPrevMargin = limitedData.map((item) => {
-                            const dbRecord = dbSkuMap.get(item.id);
-                            return {
-                                ...item,
-                                prev_profit_margin: dbRecord?.prev_profit_margin ?? dbRecord?.profit_margin ?? 0,
-                            };
-                        });
-
 
                         fetch(N8N_CALLBACK_URL, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify(skusWithPrevMargin),
+                            body: JSON.stringify(toSendData),
                         })
 
                     }
