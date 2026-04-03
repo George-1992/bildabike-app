@@ -1528,6 +1528,8 @@ const saveDataToDB = async ({ data, workspaceId }) => {
                 sd.connect?.skus?.map(sku => sku.id).filter(Boolean) || []
             );
 
+
+
             const existingSkus = skuIds.length
                 ? await Prisma.skus.findMany({
                     where: {
@@ -1567,6 +1569,20 @@ const saveDataToDB = async ({ data, workspaceId }) => {
                         });
                     }
                 }
+            }
+
+
+            // now change in_stock to false for skus that are not in the current scrape but exist in the db for this workspace
+            if (skuIds.length) {
+                await Prisma.skus.updateMany({
+                    where: {
+                        id: { notIn: skuIds },
+                        workspaceId: workspaceId,
+                    },
+                    data: {
+                        in_stock: false,
+                    }
+                });
             }
         }
 
