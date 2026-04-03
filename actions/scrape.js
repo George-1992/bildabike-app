@@ -1574,15 +1574,35 @@ const saveDataToDB = async ({ data, workspaceId }) => {
 
             // now change in_stock to false for skus that are not in the current scrape but exist in the db for this workspace
             if (skuIds.length) {
-                await Prisma.skus.updateMany({
+                console.log(`Checking for SKUs to mark as out of stock. Current scrape has ${skuIds.length} SKUs.`);
+
+                const notScrapedSkus = await Prisma.skus.findMany({
                     where: {
                         id: { notIn: skuIds },
-                        workspaceId: workspaceId,
+                        workspace_id: workspaceId,
                     },
-                    data: {
-                        in_stock: false,
+                    select: {
+                        id: true,
                     }
                 });
+
+                console.log(`Found ${notScrapedSkus.length} SKUs that were not in the current scrape.`);
+                if (notScrapedSkus.length > 0) {
+
+                    await Prisma.skus.updateMany({
+                        where: {
+                            id: { in: notScrapedSkus.map(sku => sku.id) },
+                            workspace_id: workspaceId,
+                        },
+                        data: {
+                            in_stock: false,
+                        }
+                    });
+
+                    console.log(`Marked ${notScrapedSkus.length} SKUs as out of stock.`);
+                } else {
+                    console.log('No SKUs to mark as out of stock.');
+                }
             }
         }
 
