@@ -627,7 +627,7 @@ export default async function startScrape({
             await Prisma.scraps.update({
                 where: { id: scrapId },
                 data: {
-                    result: result,
+                    // result: result,
                     status: 'completed',
                 }
             });
