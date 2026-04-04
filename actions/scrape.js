@@ -649,7 +649,6 @@ export default async function startScrape({
             });
             callback(cd);
         };
-        resObj = result;
 
 
         // save locally if its dev
@@ -658,6 +657,9 @@ export default async function startScrape({
             fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
             logger.log(`Result saved locally at ${filePath}`);
         }
+
+        resObj.success = true;
+        resObj.message = 'Scraping completed successfully';
         return resObj;
 
     } catch (error) {
