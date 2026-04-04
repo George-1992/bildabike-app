@@ -1,11 +1,16 @@
+import { appConsole } from '@/utils/logger';
 import fs from 'fs';
+
+const IS_DEV = process.env.NODE_ENV !== 'production';
+const BROWSERLESS_URL = process.env.BROWSERLESS_URL;
+const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
+
 
 const makeErrorResponse = (message) => ({
     success: false,
     message,
     data: null,
 });
-
 const toBuffer = (data) => {
     if (!data) {
         return null;
@@ -93,7 +98,7 @@ export const processBrowserless = async (response) => {
         for (const key of operationalKeys) {
             if (resObj[key] && Array.isArray(resObj[key])) {
                 const urls = [];
-                console.log(`Processing items for key "${key}":`, resObj[key].length);
+                // console.log(`Processing items for key "${key}":`, resObj[key].length);
 
                 for (const item of resObj[key]) {
                     const data = item?.data;
@@ -135,3 +140,67 @@ export const processBrowserless = async (response) => {
         return makeErrorResponse('Error processing browserless response: ' + error.message);
     }
 };
+export const getFuncBody = (func) => {
+    const funcStr = func.toString();
+    const match = funcStr.match(/^async\s*\(\)\s*=>\s*\{([\s\S]*)\}\s*$/);
+    return match ? match[1].trim() : funcStr;
+};
+
+
+
+
+export const browserless = async (body, options = {
+    type: 'function',
+    timeout: 300000, // 5 minutes
+    stealth: true
+}) => {
+
+    const logger = ((prefix = 'browserless >>>') => {
+        return {
+            log: (...args) => appConsole.log(prefix, ...args),
+            error: (...args) => appConsole.error(prefix, ...args),
+            warn: (...args) => appConsole.warn(prefix, ...args)
+        }
+    })();
+
+    let resObj = {
+        success: false,
+        warning: false,
+        message: '',
+        data: null,
+    };
+
+    try {
+        // logger.log('started');
+
+        let url = `${BROWSERLESS_URL}/function?token=${BROWSERLESS_TOKEN}`;
+        if (options.timeout) {
+            url += `&timeout=${options.timeout}`;
+        }
+        if (options.stealth) {
+            url += `&stealth=true`;
+        }
+
+    
+        // let start = Date.now();
+        const fetchRes = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/javascript',
+                'Cache-Control': 'no-cache'
+            },
+            body: body,
+        });
+
+        resObj = await processBrowserless(fetchRes);
+
+    } catch (error) {
+        logger.error(error);
+        resObj.message = error.message || 'An error occurred';
+        resObj.warning = true;
+    }
+
+    return resObj;
+}
+
+

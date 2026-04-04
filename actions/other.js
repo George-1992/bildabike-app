@@ -212,8 +212,8 @@ export const getSkusForEmail = async ({
 
 
 export const testButtonFunction = ({ workspace }) => {
-    fairharbor();
-    return;
+    // fairharbor();
+    // return;
     startScrape({
         workspaceId: workspace.id,
         callback: async (result) => {
