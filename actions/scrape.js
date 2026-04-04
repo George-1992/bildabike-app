@@ -597,6 +597,7 @@ export default async function startScrape({
             //     workspaceId,
             // }
         ];
+        const taskResults = [];
 
         for (const task of tasks) {
             const now = Date.now();
@@ -609,6 +610,7 @@ export default async function startScrape({
             logger.log('message', tResult.message, ' Result.data.length: ', tResult?.data?.length)
             const formattedData = task.getResult ? task.getResult(tResult) : tResult;
             logger.log('formattedData.data.length', formattedData?.data?.length)
+            taskResults.push({ name: task.name, result: formattedData });
 
             logger.log('scrap >>> Saving to DB for task: ', task.name);
             await saveDataToDB({
@@ -637,16 +639,18 @@ export default async function startScrape({
         // saveDataToDB({ data: result.data, workspaceId });
         if (callback && typeof callback === 'function') {
             const cd = [];
-            result.data.forEach(item => {
+            taskResults.forEach(item => {
                 const d = Array.isArray(item.result)
                     ? item.result
                     : Array.isArray(item.result?.data) ? item.result.data : [];
 
                 cd.push(...d);
-                if (cd.length === 0) {
-                    logger.warn('callback >>> No data to send in callback');
-                }
             });
+
+            if (cd.length === 0) {
+                logger.warn('callback >>> No data to send in callback');
+            }
+
             callback(cd);
         };
 
@@ -654,12 +658,13 @@ export default async function startScrape({
         // save locally if its dev
         if (IS_DEV) {
             const filePath = `./data/startScrape_result.json`;
-            fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+            fs.writeFileSync(filePath, JSON.stringify(taskResults, null, 2));
             logger.log(`Result saved locally at ${filePath}`);
         }
 
         resObj.success = true;
         resObj.message = 'Scraping completed successfully';
+        resObj.data = taskResults;
         return resObj;
 
     } catch (error) {
