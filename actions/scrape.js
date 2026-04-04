@@ -1326,6 +1326,12 @@ const scrap = async ({ workspaceId } = {}) => {
 
         const processTask = async ({ task }) => {
 
+            let resObj = {
+                success: false,
+                message: '',
+                data: {},
+            };
+
             // // =============test code start===========
             // return task.getResult(dummyData)
             // // =============test code end===========
@@ -1359,12 +1365,19 @@ const scrap = async ({ workspaceId } = {}) => {
             const responseText = await fetchRes.text();
 
             if (!fetchRes.ok) {
-                console.error('Error response:', responseText);
-                throw new Error(`HTTP ${fetchRes.status}: ${responseText}`);
+                const msg = `HTTP ${fetchRes.status}: ${responseText}`;
+                console.error('Error response from browserless:', msg);
+                resObj.success = false;
+                resObj.message = msg;
+                return resObj;
             }
 
             if (!responseText || responseText.trim() === '') {
-                throw new Error('Empty response from browserless');
+                const msg = 'Empty response from browserless';
+                console.error(msg);
+                resObj.success = false;
+                resObj.message = msg;
+                return resObj;
             }
 
             const resultPre = JSON.parse(responseText);
@@ -1394,35 +1407,8 @@ const scrap = async ({ workspaceId } = {}) => {
             }
 
             console.log(`scrap >>> processTask >>> Processed result for task: ${task.name}, message: ${result.message}`);
-            return result;
-
-            // save htmls in htmls folder
-            if (result.htmls && result.htmls.length > 0) {
-                if (!fs.existsSync('htmls')) {
-                    fs.mkdirSync('htmls');
-                }
-                result.htmls.forEach((html, index) => {
-                    const filePath = `htmls/page_${Date.now()}_${index}.html`;
-                    fs.writeFileSync(filePath, html);
-                    console.log('Saved html:', filePath);
-                });
-            }
-
-
-            console.log('result: ', {
-                ...result,
-                screenshots: result.screenshots ? result.screenshots.length : undefined,
-                htmls: result.htmls ? result.htmls.length : undefined,
-            });
-
-            // save result in result.json
-            const resultFilePath = `result_${Date.now()}.json`;
-            fs.writeFileSync(resultFilePath, JSON.stringify({
-                ...result,
-                screenshots: result.screenshots ? result.screenshots.length : undefined,
-                htmls: result.htmls ? result.htmls.length : undefined,
-            }, null, 2));
-            console.log('Saved result:', resultFilePath);
+            resObj = result;
+            return resObj;
 
         };
 

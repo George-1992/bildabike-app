@@ -6,7 +6,6 @@ import startScrape from "@/actions/scrape";
 export default function TestButton({ workspace }) {
     const handleClick = async () => {
         console.log('Button clicked!', workspace);
-        // fairharbor();
         testButtonFunction({
             workspace,
         });
