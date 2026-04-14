@@ -1,3 +1,4 @@
+import { emailScrape } from "@/actions/scrape";
 
 const N8N_CALLBACK_URL = process.env.N8N_CALLBACK_URL || '';
 const API_KEY = process.env.API_KEY || '';
