@@ -26126,41 +26126,6 @@
           }
         },
         {
-          "id": "65db820f-055b-4ed6-a797-a210844e700a",
-          "name": "SuperSix EVO 3",
-          "source": "cyclingsportsgroup",
-          "in_stock": true,
-          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/sitecore/content/~/media/Images/Dorel/B2B/Common/Bikes/C23_C11502U_SuperSix_EVO_Crb_3_CHK_PD.ashx",
-          "connect": {
-            "skus": [
-              {
-                "id": "C11502U1061",
-                "name": "",
-                "source": "cyclingsportsgroup",
-                "in_stock": true,
-                "record_url": "",
-                "item_number": "C11502U1061",
-                "brand": "Cannondale",
-                "product_type": "",
-                "quantity": 4,
-                "size": "",
-                "wheel_size_front": "",
-                "wheel_size_rear": "",
-                "level": "",
-                "model": "",
-                "model_series_name": "",
-                "model_year": "",
-                "item_group_name": "",
-                "normal_price": 2000.56,
-                "consumer_price": 2939,
-                "dealer_price": 2000.56,
-                "profit_margin": 938.44,
-                "profit_margin_percent": 31.93
-              }
-            ]
-          }
-        },
-        {
           "id": "c5dc6670-80db-4a8a-9ab0-8b61fd5aa2a6",
           "name": "SuperSix EVO 6",
           "source": "cyclingsportsgroup",
@@ -26404,6 +26369,41 @@
                 "consumer_price": 2399.99,
                 "dealer_price": 1633.64,
                 "profit_margin": 766.3499999999997,
+                "profit_margin_percent": 31.93
+              }
+            ]
+          }
+        },
+        {
+          "id": "65db820f-055b-4ed6-a797-a210844e700a",
+          "name": "SuperSix EVO 3",
+          "source": "cyclingsportsgroup",
+          "in_stock": true,
+          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/sitecore/content/~/media/Images/Dorel/B2B/Common/Bikes/C23_C11502U_SuperSix_EVO_Crb_3_CHK_PD.ashx",
+          "connect": {
+            "skus": [
+              {
+                "id": "C11502U1061",
+                "name": "",
+                "source": "cyclingsportsgroup",
+                "in_stock": true,
+                "record_url": "",
+                "item_number": "C11502U1061",
+                "brand": "Cannondale",
+                "product_type": "",
+                "quantity": 4,
+                "size": "",
+                "wheel_size_front": "",
+                "wheel_size_rear": "",
+                "level": "",
+                "model": "",
+                "model_series_name": "",
+                "model_year": "",
+                "item_group_name": "",
+                "normal_price": 2000.56,
+                "consumer_price": 2939,
+                "dealer_price": 2000.56,
+                "profit_margin": 938.44,
                 "profit_margin_percent": 31.93
               }
             ]
@@ -27820,65 +27820,6 @@
           }
         },
         {
-          "id": "69076a81-60e7-4ee6-aed5-789b05dfe454",
-          "name": "SuperSix EVO Hi-MOD 2",
-          "source": "cyclingsportsgroup",
-          "in_stock": true,
-          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/sitecore/content/~/media/Images/Dorel/B2B/Common/Bikes/C24_C11202U_SuperSix_EVO_HM_2_BLK_PD.ashx",
-          "connect": {
-            "skus": [
-              {
-                "id": "C11202U3061",
-                "name": "",
-                "source": "cyclingsportsgroup",
-                "in_stock": true,
-                "record_url": "",
-                "item_number": "C11202U3061",
-                "brand": "Cannondale",
-                "product_type": "",
-                "quantity": 5,
-                "size": "",
-                "wheel_size_front": "",
-                "wheel_size_rear": "",
-                "level": "",
-                "model": "",
-                "model_series_name": "",
-                "model_year": "",
-                "item_group_name": "",
-                "normal_price": 4180.97,
-                "consumer_price": 5879,
-                "dealer_price": 4180.97,
-                "profit_margin": 1698.0299999999997,
-                "profit_margin_percent": 28.88
-              },
-              {
-                "id": "C11202U4061",
-                "name": "",
-                "source": "cyclingsportsgroup",
-                "in_stock": true,
-                "record_url": "",
-                "item_number": "C11202U4061",
-                "brand": "Cannondale",
-                "product_type": "",
-                "quantity": 2,
-                "size": "",
-                "wheel_size_front": "",
-                "wheel_size_rear": "",
-                "level": "",
-                "model": "",
-                "model_series_name": "",
-                "model_year": "",
-                "item_group_name": "",
-                "normal_price": 4180.97,
-                "consumer_price": 5879,
-                "dealer_price": 4180.97,
-                "profit_margin": 1698.0299999999997,
-                "profit_margin_percent": 28.88
-              }
-            ]
-          }
-        },
-        {
           "id": "cfbeff50-ce72-4523-b2e7-2dad71386fd2",
           "name": "SuperSix EVO LAB71 Frameset",
           "source": "cyclingsportsgroup",
@@ -29262,6 +29203,65 @@
                 "dealer_price": 4835.27,
                 "profit_margin": 2163.7299999999996,
                 "profit_margin_percent": 30.91
+              }
+            ]
+          }
+        },
+        {
+          "id": "69076a81-60e7-4ee6-aed5-789b05dfe454",
+          "name": "SuperSix EVO Hi-MOD 2",
+          "source": "cyclingsportsgroup",
+          "in_stock": true,
+          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/sitecore/content/~/media/Images/Dorel/B2B/Common/Bikes/C24_C11202U_SuperSix_EVO_HM_2_BLK_PD.ashx",
+          "connect": {
+            "skus": [
+              {
+                "id": "C11202U3061",
+                "name": "",
+                "source": "cyclingsportsgroup",
+                "in_stock": true,
+                "record_url": "",
+                "item_number": "C11202U3061",
+                "brand": "Cannondale",
+                "product_type": "",
+                "quantity": 4,
+                "size": "",
+                "wheel_size_front": "",
+                "wheel_size_rear": "",
+                "level": "",
+                "model": "",
+                "model_series_name": "",
+                "model_year": "",
+                "item_group_name": "",
+                "normal_price": 4180.97,
+                "consumer_price": 5879,
+                "dealer_price": 4180.97,
+                "profit_margin": 1698.0299999999997,
+                "profit_margin_percent": 28.88
+              },
+              {
+                "id": "C11202U4061",
+                "name": "",
+                "source": "cyclingsportsgroup",
+                "in_stock": true,
+                "record_url": "",
+                "item_number": "C11202U4061",
+                "brand": "Cannondale",
+                "product_type": "",
+                "quantity": 2,
+                "size": "",
+                "wheel_size_front": "",
+                "wheel_size_rear": "",
+                "level": "",
+                "model": "",
+                "model_series_name": "",
+                "model_year": "",
+                "item_group_name": "",
+                "normal_price": 4180.97,
+                "consumer_price": 5879,
+                "dealer_price": 4180.97,
+                "profit_margin": 1698.0299999999997,
+                "profit_margin_percent": 28.88
               }
             ]
           }
@@ -38770,100 +38770,6 @@
           }
         },
         {
-          "id": "071e08b5-0449-4ace-adbb-26f36a97ae08",
-          "name": "Topstone Carbon 2 Lefty",
-          "source": "cyclingsportsgroup",
-          "in_stock": false,
-          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/~/media/Images/Dorel/B2B/Common/Bikes/C23_C15203U_Topstone_Crb_2_Lefty_GRN_PD.ashx",
-          "connect": {
-            "skus": [
-              {
-                "id": "C15203U10SM",
-                "name": "",
-                "source": "cyclingsportsgroup",
-                "in_stock": false,
-                "record_url": "",
-                "item_number": "C15203U10SM",
-                "brand": "Cannondale",
-                "product_type": "",
-                "quantity": 0,
-                "size": "",
-                "wheel_size_front": "",
-                "wheel_size_rear": "",
-                "level": "",
-                "model": "",
-                "model_series_name": "",
-                "model_year": "",
-                "item_group_name": "",
-                "normal_price": 2487.08,
-                "consumer_price": 3600,
-                "dealer_price": 2487.08,
-                "profit_margin": 1112.92,
-                "profit_margin_percent": 30.91
-              }
-            ]
-          }
-        },
-        {
-          "id": "9170becb-10b3-4b10-8711-fd1773e9ba04",
-          "name": "Topstone Carbon 2 Lefty",
-          "source": "cyclingsportsgroup",
-          "in_stock": true,
-          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/sitecore/content/~/media/Images/Dorel/B2B/Common/Bikes/C24_C15203U_Topstone_Crb_2_Lefty_CAF_PD.ashx",
-          "connect": {
-            "skus": [
-              {
-                "id": "C15203U30XS",
-                "name": "",
-                "source": "cyclingsportsgroup",
-                "in_stock": true,
-                "record_url": "",
-                "item_number": "C15203U30XS",
-                "brand": "Cannondale",
-                "product_type": "",
-                "quantity": 18,
-                "size": "",
-                "wheel_size_front": "",
-                "wheel_size_rear": "",
-                "level": "",
-                "model": "",
-                "model_series_name": "",
-                "model_year": "",
-                "item_group_name": "",
-                "normal_price": 2487.08,
-                "consumer_price": 3600,
-                "dealer_price": 2487.08,
-                "profit_margin": 1112.92,
-                "profit_margin_percent": 30.91
-              },
-              {
-                "id": "C15203U30SM",
-                "name": "",
-                "source": "cyclingsportsgroup",
-                "in_stock": true,
-                "record_url": "",
-                "item_number": "C15203U30SM",
-                "brand": "Cannondale",
-                "product_type": "",
-                "quantity": 38,
-                "size": "",
-                "wheel_size_front": "",
-                "wheel_size_rear": "",
-                "level": "",
-                "model": "",
-                "model_series_name": "",
-                "model_year": "",
-                "item_group_name": "",
-                "normal_price": 2487.08,
-                "consumer_price": 3600,
-                "dealer_price": 2487.08,
-                "profit_margin": 1112.92,
-                "profit_margin_percent": 30.91
-              }
-            ]
-          }
-        },
-        {
           "id": "696157bc-6dd2-4cab-a453-d089569a8a8e",
           "name": "Topstone Carbon 2 AXS - 1x",
           "source": "cyclingsportsgroup",
@@ -39059,7 +38965,7 @@
                 "item_number": "C15202U10SM",
                 "brand": "Cannondale",
                 "product_type": "",
-                "quantity": 40,
+                "quantity": 39,
                 "size": "",
                 "wheel_size_front": "",
                 "wheel_size_rear": "",
@@ -39311,6 +39217,100 @@
                 "dealer_price": 2904.98,
                 "profit_margin": 1494.02,
                 "profit_margin_percent": 33.96
+              }
+            ]
+          }
+        },
+        {
+          "id": "071e08b5-0449-4ace-adbb-26f36a97ae08",
+          "name": "Topstone Carbon 2 Lefty",
+          "source": "cyclingsportsgroup",
+          "in_stock": false,
+          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/~/media/Images/Dorel/B2B/Common/Bikes/C23_C15203U_Topstone_Crb_2_Lefty_GRN_PD.ashx",
+          "connect": {
+            "skus": [
+              {
+                "id": "C15203U10SM",
+                "name": "",
+                "source": "cyclingsportsgroup",
+                "in_stock": false,
+                "record_url": "",
+                "item_number": "C15203U10SM",
+                "brand": "Cannondale",
+                "product_type": "",
+                "quantity": 0,
+                "size": "",
+                "wheel_size_front": "",
+                "wheel_size_rear": "",
+                "level": "",
+                "model": "",
+                "model_series_name": "",
+                "model_year": "",
+                "item_group_name": "",
+                "normal_price": 2487.08,
+                "consumer_price": 3600,
+                "dealer_price": 2487.08,
+                "profit_margin": 1112.92,
+                "profit_margin_percent": 30.91
+              }
+            ]
+          }
+        },
+        {
+          "id": "9170becb-10b3-4b10-8711-fd1773e9ba04",
+          "name": "Topstone Carbon 2 Lefty",
+          "source": "cyclingsportsgroup",
+          "in_stock": true,
+          "product_image": "https://d3lpewy8i2ri01.cloudfront.net/sitecore/content/~/media/Images/Dorel/B2B/Common/Bikes/C24_C15203U_Topstone_Crb_2_Lefty_CAF_PD.ashx",
+          "connect": {
+            "skus": [
+              {
+                "id": "C15203U30XS",
+                "name": "",
+                "source": "cyclingsportsgroup",
+                "in_stock": true,
+                "record_url": "",
+                "item_number": "C15203U30XS",
+                "brand": "Cannondale",
+                "product_type": "",
+                "quantity": 18,
+                "size": "",
+                "wheel_size_front": "",
+                "wheel_size_rear": "",
+                "level": "",
+                "model": "",
+                "model_series_name": "",
+                "model_year": "",
+                "item_group_name": "",
+                "normal_price": 2487.08,
+                "consumer_price": 3600,
+                "dealer_price": 2487.08,
+                "profit_margin": 1112.92,
+                "profit_margin_percent": 30.91
+              },
+              {
+                "id": "C15203U30SM",
+                "name": "",
+                "source": "cyclingsportsgroup",
+                "in_stock": true,
+                "record_url": "",
+                "item_number": "C15203U30SM",
+                "brand": "Cannondale",
+                "product_type": "",
+                "quantity": 38,
+                "size": "",
+                "wheel_size_front": "",
+                "wheel_size_rear": "",
+                "level": "",
+                "model": "",
+                "model_series_name": "",
+                "model_year": "",
+                "item_group_name": "",
+                "normal_price": 2487.08,
+                "consumer_price": 3600,
+                "dealer_price": 2487.08,
+                "profit_margin": 1112.92,
+                "profit_margin_percent": 30.91
               }
             ]
           }

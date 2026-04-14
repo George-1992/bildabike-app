@@ -38,7 +38,7 @@ export async function POST(request) {
 
         // console.log("workspace: ", workspace);
         resObj.success = true;
-        resObj.data = workspace;
+        // resObj.data = workspace;
         return Response.json(resObj)
 
     } catch (error) {
