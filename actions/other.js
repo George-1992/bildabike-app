@@ -112,7 +112,6 @@ export const getSkusForEmail = async ({
     profit_margin_percent = 40,
     negativeKeywords = ['Surround Rails'],
     data = [],
-
 }) => {
 
     const isOK = (sku, item) => {

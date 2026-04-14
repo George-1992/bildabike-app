@@ -1,9 +1,13 @@
+'use client';
+
+import { emailScrape } from "@/actions/scrape";
 import {
     ArrowRight,
     Bike,
     CalendarClock,
     ClipboardList,
     FileText,
+    GlobeIcon,
     Settings,
     Wrench,
 } from "lucide-react";
@@ -50,6 +54,16 @@ const highlights = [
     },
 ];
 
+const handleEmailScrape = async (e) => {
+    try {
+        e.preventDefault();
+        emailScrape({})
+
+    } catch (error) {
+        console.log('error: ', error);
+    }
+}
+
 export default function Home({ user }) {
     const firstName = user?.name?.split(" ")?.[0] || "Builder";
 
@@ -69,6 +83,14 @@ export default function Home({ user }) {
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <button
+                            className="inline-flex shadow-lg items-center gap-2 rounded-md border border-transparent bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                            onClick={handleEmailScrape}
+                        >
+                            <GlobeIcon className="h-4 w-4" />
+                            Start Manual Scrapping
+                        </button>
+
                         <a
                             href="/bikes"
                             className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50"
@@ -78,10 +100,11 @@ export default function Home({ user }) {
                         </a>
                         <a
                             href="/notes"
-                            className="inline-flex items-center gap-2 rounded-md border border-transparent bg-slate-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50"
                         >
                             Open Notes
                         </a>
+
                     </div>
                 </div>
             </section>

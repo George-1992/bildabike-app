@@ -5,6 +5,7 @@ import { cyclingSportsGroup } from '@/utils/scrapeFunctions/cyclingsportsgroup';
 import { giantGroup } from '@/utils/scrapeFunctions/giantGroup';
 import { appConsole } from '@/utils/logger';
 import { browserless, getFuncBody } from '@/utils/browserless';
+import { getSkusForEmail } from '@/actions/other';
 // import dummyData from "../result_pre_cyclingsportsgroup_1774635040215.json";
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
@@ -21,6 +22,7 @@ const CCG_PASSWORD = process.env.CCG_PASSWORD || '';
 const QBP_USERNAME = process.env.QBP_USERNAME || '';
 const QBP_PASSWORD = process.env.QBP_PASSWORD || '';
 
+const N8N_CALLBACK_URL = process.env.N8N_CALLBACK_URL || '';
 
 
 // utils
@@ -675,6 +677,66 @@ export default async function startScrape({
     }
 }
 
+
+
+// other 
+const scappingDefaults = {
+    limit: 10,
+    profit_margin_percent: 40,
+    minPrice: 60,
+    negativeKeywords: ['Surround Rails'],
+};
+export const emailScrape = async ({
+    // limit = scappingDefaults.limit,
+    // minPrice = scappingDefaults.minPrice,
+    // profit_margin_percent = scappingDefaults.profit_margin_percent,
+    // negativeKeywords = scappingDefaults.negativeKeywords,
+    requestBody = {},
+}) => {
+
+    const limit = requestBody.limit || scappingDefaults.limit;
+    const profit_margin_percent = requestBody.profit_margin_percent || scappingDefaults.profit_margin_percent;
+    const minPrice = requestBody.minPrice || scappingDefaults.minPrice;
+    const baseNegativeKeywords = scappingDefaults.negativeKeywords;
+    const negativeKeywords = requestBody.negative_keywords || baseNegativeKeywords;
+
+    const workspace = await Prisma.workspaces.findFirst();
+    if (!workspace) {
+        resObj.message = 'No workspace found';
+        return Response.json(resObj, { status: 404 })
+    }
+    const wId = workspace.id;
+    // initate scrapper 
+    startScrape({
+        workspaceId: wId,
+        callback: async (result) => {
+            try {
+                if (N8N_CALLBACK_URL) {
+                    console.log("Sending data to n8n...");
+
+                    const toSendData = await getSkusForEmail({
+                        limit: limit,
+                        minPrice: minPrice,
+                        profit_margin_percent: profit_margin_percent,
+                        negativeKeywords: negativeKeywords,
+                        data: result,
+                    });
+
+                    fetch(N8N_CALLBACK_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(toSendData),
+                    })
+
+                }
+            } catch (error) {
+                console.error("Error in callback: ", error);
+            }
+        },
+    });
+}
 
 
 
